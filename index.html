@@ -90,6 +90,50 @@ main#app{margin:0 0 0 198px;max-width:none;padding:24px 28px 42px;min-height:cal
 .lower-widgets .home-favorites-widget{margin-top:0}
 @media(max-width:900px){.lower-widgets{grid-template-columns:1fr!important}}
 .side-bottom-art{flex:1 1 auto!important;height:auto!important;min-height:260px;width:auto!important;margin:14px -11px 0 -20px!important;background-size:contain!important;background-position:right bottom!important}
+
+/* === МОБИЛЬНАЯ ВЕРСИЯ (до 700px) === */
+@media(max-width:700px){
+ html,body{overflow-x:hidden}
+ /* шапка: бренд, кнопки, поиск — три аккуратных ряда, уезжает при прокрутке */
+ .topbar{position:static!important;height:auto!important;min-height:0!important;flex-wrap:wrap!important;padding:10px 14px 12px!important;gap:8px!important}
+ .brand{flex:1 1 100%!important;font-size:19px!important;gap:8px}
+ .brand small{font-size:11px!important}
+ .top-actions{order:2;flex:1 1 100%;margin:0!important;gap:0}
+ .top-actions nav{display:flex!important;width:100%;max-width:none!important;overflow:visible!important;flex-wrap:nowrap!important;gap:6px;justify-content:flex-start}
+ .top-actions nav button.ghost{flex:1 1 auto;white-space:nowrap;font-size:12px!important;padding:8px 6px!important;border-radius:10px;text-align:center}
+ .top-search{order:3!important;flex:1 1 100%!important;height:40px!important}
+ /* нижняя панель вместо боковой */
+ .sidebar{top:auto!important;bottom:0!important;left:0;right:0;width:100%!important;height:auto!important;flex-direction:row!important;padding:5px 4px calc(5px + env(safe-area-inset-bottom))!important;border-right:0!important;border-top:1px solid #e9e3e3;background:rgba(250,249,247,.97)!important;backdrop-filter:blur(12px);box-shadow:0 -4px 16px #3b33440d;z-index:60}
+ .side-links{display:flex!important;width:100%;gap:2px}
+ .side-link{flex:1 1 0;min-width:0;display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:6px 1px!important;font-size:10px!important;line-height:1.1;border-radius:10px;white-space:nowrap}
+ .side-link span{width:24px;height:24px}
+ .side-quote,.side-bottom-art{display:none!important}
+ main#app{margin-left:0!important;padding:14px 14px 92px!important;min-height:0}
+ .dashboard{gap:14px}
+ /* шапка-баннер: текст сверху, картинка снизу */
+ .hero-banner{flex-direction:column!important;height:auto!important;min-height:0!important;border-radius:14px;margin-bottom:6px}
+ .hero-copy{width:100%!important;min-width:0!important;padding:20px 18px 18px!important}
+ .eyebrow{font-size:9.5px;letter-spacing:1.8px}
+ .hero-banner h1{font-size:30px!important;line-height:1.05;margin:8px 0 10px}
+ .hero-banner p{font-size:13px!important;line-height:1.45;max-width:none}
+ .hero-banner p br{display:none}
+ .hero-histology{position:relative!important;width:100%!important;height:150px;right:auto;top:auto;bottom:auto}
+ /* разделы */
+ .section-heading h2{font-size:22px!important}
+ .dashboard-modes{grid-template-columns:1fr 1fr!important;gap:14px 10px!important}
+ .dash-mode .mode-art{height:108px!important}
+ .dash-mode .mode-art img{max-height:108px!important}
+ .dash-mode .mode-meta strong{font-size:19px!important}
+ /* нижние блоки и правая колонка */
+ .lower-widgets{grid-template-columns:1fr!important;gap:12px}
+ .dashboard-rail{grid-template-columns:1fr!important;gap:12px}
+ .rail-progress{display:block!important}
+ .widget{padding:14px!important;border-radius:14px}
+ .quote-card{display:block!important;min-height:130px;border-radius:14px}
+ .result-row{grid-template-columns:30px minmax(0,1fr) 40px!important}
+ .result-row time{display:none}
+}
+@media(max-width:360px){.hero-banner h1{font-size:26px!important}.side-link{font-size:9px!important}}
 </style></head><body>
 <header class="topbar"><div class="brand" onclick="home()"><span class="brand-mark">⚕</span><span>ТестПатан ВГМУ<small>Патологическая анатомия</small></span></div><div class="top-search"><span>⌕</span><input id="siteSearch" placeholder="Поиск по темам, разделам, терминам…" onkeydown="if(event.key==='Enter')searchSite(this.value)"></div><div class="top-actions"><button class="icon-action" title="Уведомления" onclick="toast('Новых уведомлений пока нет')">♧</button><nav id="nav"></nav></div></header>
 <aside class="sidebar" id="sidebar"><div class="side-links"><button class="side-link active" data-side="home" onclick="home()"><span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11 12 3.8l8.5 7.2"/><path d="M5.5 9.8V20h13V9.8"/><path d="M10 20v-5.5h4V20"/></svg></span>Главная</button><button class="side-link" onclick="sectionsPage()"><span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 9 4.5-9 4.5-9-4.5z"/><path d="m3 12 9 4.5 9-4.5"/><path d="m3 16.5 9 4.5 9-4.5"/></svg></span>Разделы</button><button class="side-link" data-side="tests" onclick="testsPage()"><span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h8.5L19 7.5V21H6z"/><path d="M14 3v5h5"/><path d="M9 12.5h7M9 16h7"/></svg></span>Тесты</button><button class="side-link" onclick="profile()"><span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="14" width="4" height="6.5" rx="1.2"/><rect x="10" y="9" width="4" height="11.5" rx="1.2"/><rect x="16.5" y="4" width="4" height="16.5" rx="1.2"/></svg></span>Статистика</button><button class="side-link" onclick="favoritesPage()"><span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3.5h11V21L12 16.8 6.5 21z"/></svg></span>Избранное</button><button class="side-link" onclick="materialsPage()"><span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5C10 5 7 4.5 3.5 5v13.5c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5C17 4.5 14 5 12 6.5z"/><path d="M12 6.5V20"/></svg></span>Материалы</button></div><div class="side-quote">«Патологическая анатомия — это язык, на котором организм говорит с врачом.»</div><div class="side-bottom-art" aria-hidden="true"></div></aside>
@@ -132,7 +176,7 @@ async function logout(){await sb.auth.signOut();me=null;isAdmin=false;nav();home
 
 function home(mark=true){if(mark)markRoute('home');
   const modeCards=[['macro','Макро','Макроскопическое строение органов и тканей.','<img src="assets/asset-liver.png" alt="">','mode-macro'],['micro','Микро','Микроскопические изменения и морфология.','<img src="assets/asset-microscope.png" alt="">','mode-micro'],['theory','Теория','Основные понятия, классификации, схемы.','<img src="assets/asset-book.png" alt="">','mode-theory'],['exam','Экзамен','Итоговые тесты и контроль знаний.','<img src="assets/asset-cap.png" alt="">','mode-exam']];
-  app.innerHTML=`<div class="dashboard"><div class="dashboard-main"><section class="hero-banner"><div class="hero-copy"><div class="eyebrow">ПАТОЛОГИЧЕСКАЯ АНАТОМИЯ · ВГМУ</div><h1>Проверь знания.<br>Находи темы для<br>повторения.</h1><p>Удобные тесты, структурированные разделы<br>и наглядные материалы для эффективной<br>подготовки к занятиям и экзаменам.</p><div class="hero-script">Знания сегодня —<br>уверенность завтра ♡</div></div><div class="hero-histology" aria-hidden="true"><div class="hero-pager"><button onclick="toast('Вы на главной странице')">←</button><span>○</span><button onclick="pick('macro')">→</button></div></div></section>
+  app.innerHTML=`<div class="dashboard"><div class="dashboard-main"><section class="hero-banner"><div class="hero-copy"><div class="eyebrow">ПАТОЛОГИЧЕСКАЯ АНАТОМИЯ · ВГМУ</div><h1>Проверь знания.<br>Находи темы для<br>повторения.</h1><p>Удобные тесты, структурированные разделы и наглядные материалы для эффективной подготовки к занятиям и экзаменам.</p><div class="hero-script">Знания сегодня —<br>уверенность завтра ♡</div></div><div class="hero-histology" aria-hidden="true"><div class="hero-pager"><button onclick="toast('Вы на главной странице')">←</button><span>○</span><button onclick="pick('macro')">→</button></div></div></section>
   <div class="section-heading"><h2><span></span>Разделы</h2><button class="text-link" onclick="sectionsPage()">Все разделы →</button></div><div class="dashboard-modes">`+modeCards.map(m=>`<button class="dash-mode ${m[4]}" onclick="pick('${m[0]}')"><div class="mode-art">${m[3]}</div><div class="mode-meta"><strong>${m[1]}</strong><small>${m[2]}</small></div><span class="mode-arrow">→</span></button>`).join('')+`</div>
   <div class="lower-widgets"><section class="widget updates-widget"><div class="widget-head"><h3>Последние результаты</h3><button class="text-link" onclick="profile()">Все попытки →</button></div><div id="home-latest-results"><div class="update-row"><span>▤</span><div><b>Последние результаты</b><small>Загрузка истории попыток…</small></div></div></div></section><section class="widget home-favorites-widget"><div class="widget-head"><h3>★ Избранные вопросы</h3><button class="text-link" onclick="favoritesPage()">Перейти ко всем →</button></div><div id="home-favorites-list" class="home-favorites-list"><div class="favorite-empty compact-empty">Загрузка избранных вопросов…</div></div></section></div></div>
   <aside class="dashboard-rail"><section class="widget rail-progress"><div class="widget-head"><h3>Ваш прогресс</h3><button class="text-link" onclick="profile()">Подробнее →</button></div><div class="rail-ring-row"><div class="donut large" id="rail-donut"><span>0%</span></div><div><b>Общий прогресс</b><small id="rail-progress-caption">${me?'Загрузка результатов…':'Войди, чтобы увидеть результаты'}</small></div></div><div class="mini-stats" id="rail-mode-stats"><div><i class="dot dot-macro"></i>Макро <span>0</span></div><div><i class="dot dot-micro"></i>Микро <span>0</span></div><div><i class="dot dot-theory"></i>Теория <span>0</span></div><div><i class="dot dot-exam"></i>Экзамен <span>0</span></div></div></section><section class="widget today-widget"><div class="widget-head"><h3>Для подготовки</h3><span class="muted">Сегодня</span></div><button class="rail-action" onclick="pick('macro')"><span>▤</span><span><b>Практика</b><small>Решай задания по макро- и микропрепаратам</small></span><i>›</i></button><button class="rail-action" onclick="pick('exam')"><span>◎</span><span><b>Проверка знаний</b><small>Попробуй итоговый тест</small></span><i>›</i></button></section><section class="quote-card"><div class="quote-art">✧</div><blockquote>«Морфология всего живого — это история болезни и здоровья.»</blockquote><div class="quote-divider"></div><div class="quote-foot">♡ <span>Патологическая анатомия — основа клинического мышления.</span></div></section></aside></div>`;
