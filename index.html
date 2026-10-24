@@ -143,10 +143,44 @@ main#app{margin:0 0 0 198px;max-width:none;padding:24px 28px 42px;min-height:cal
 .search-drop button:hover{background:#f6eff2}
 .search-drop small{color:#8a8f9c;font-size:11px;white-space:nowrap}
 .search-drop button.all{color:#8b4d69;font-weight:600;justify-content:flex-start;border-top:1px solid #f1ebeb;border-radius:0 0 10px 10px;margin-top:4px}
+
+/* === LIQUID GLASS: нижняя навигация на телефоне === */
+.side-lens{display:none}
+@media(max-width:700px){
+ .sidebar{left:12px!important;right:12px!important;bottom:calc(10px + env(safe-area-inset-bottom))!important;width:auto!important;height:66px!important;padding:5px!important;
+  border:1px solid rgba(255,255,255,.7)!important;border-radius:34px;touch-action:none;user-select:none;-webkit-user-select:none;overflow:visible;
+  background:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,.3) 55%,rgba(255,255,255,.45))!important;
+  -webkit-backdrop-filter:blur(16px) saturate(190%) brightness(1.04);backdrop-filter:blur(16px) saturate(190%) brightness(1.04);
+  box-shadow:0 14px 34px rgba(48,34,66,.20),0 2px 6px rgba(48,34,66,.10),inset 0 1.5px 0 rgba(255,255,255,.95),inset 0 -1.5px 1px rgba(255,255,255,.45),inset 0 0 22px rgba(255,255,255,.35)!important}
+ .sidebar:before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(115deg,rgba(255,255,255,.75) 0,rgba(255,255,255,0) 28%,rgba(255,255,255,0) 72%,rgba(255,255,255,.35) 100%);mix-blend-mode:soft-light;opacity:.9}
+ .side-links{position:relative;z-index:2;height:100%}
+ .side-link{background:transparent!important;color:#4a5468;transition:color .25s,transform .35s cubic-bezier(.3,1.6,.5,1);-webkit-tap-highlight-color:transparent}
+ .side-link span{transition:transform .35s cubic-bezier(.3,1.6,.5,1)}
+ .side-link.active{color:#8b3f5e!important;font-weight:700}
+ .side-link.active span{transform:translateY(-1px) scale(1.08)}
+ .side-lens{display:block;position:absolute;z-index:1;left:0;top:4px;bottom:4px;width:var(--w,60px);translate:var(--x,0px) 0;scale:1 1;pointer-events:none;border-radius:30px;
+  transition:translate .62s cubic-bezier(.3,1.5,.45,1),width .62s cubic-bezier(.3,1.5,.45,1),scale .38s cubic-bezier(.3,1.7,.5,1),background .3s,box-shadow .3s;
+  background:radial-gradient(120% 140% at 30% 0%,rgba(255,255,255,.75) 0,rgba(255,255,255,.18) 55%),linear-gradient(180deg,rgba(166,92,124,.32),rgba(166,92,124,.15));
+  border:1px solid rgba(255,255,255,.9);
+  -webkit-backdrop-filter:blur(3px) saturate(220%) brightness(1.08) contrast(1.05);backdrop-filter:blur(3px) saturate(220%) brightness(1.08) contrast(1.05);
+  box-shadow:0 8px 18px rgba(120,60,96,.22),0 1px 3px rgba(120,60,96,.18),inset 0 2px 1px rgba(255,255,255,.95),inset 0 -3px 6px rgba(255,255,255,.55),inset 0 0 16px rgba(255,255,255,.55)}
+ .side-lens.go{scale:1.2 .9}
+ .side-lens.press{scale:1.16 1.1;background:radial-gradient(120% 140% at 30% 0%,rgba(255,255,255,.9) 0,rgba(255,255,255,.28) 60%),linear-gradient(180deg,rgba(166,92,124,.14),rgba(166,92,124,.04));
+  box-shadow:0 14px 28px rgba(120,60,96,.28),0 2px 5px rgba(120,60,96,.2),inset 0 2px 1px #fff,inset 0 -4px 8px rgba(255,255,255,.65),inset 0 0 22px rgba(255,255,255,.7)}
+ .side-lens.drag{transition:width .3s,scale .38s cubic-bezier(.3,1.7,.5,1),background .3s,box-shadow .3s}
+ .side-lens:after{content:"";position:absolute;left:14%;right:14%;top:3px;height:38%;border-radius:50%;background:linear-gradient(180deg,rgba(255,255,255,.8),rgba(255,255,255,0));opacity:.75;pointer-events:none}
+ .side-lens.press{outline:0}
+ @supports (backdrop-filter:url(#lg-refract)){
+  .side-lens.press{-webkit-backdrop-filter:url(#lg-refract) blur(1px) saturate(220%) brightness(1.1);backdrop-filter:url(#lg-refract) blur(1px) saturate(220%) brightness(1.1)}
+ }
+ main#app{padding-bottom:112px!important}
+}
+@media(prefers-reduced-motion:reduce){.side-lens,.side-link,.side-link span{transition:none!important}}
+@media(prefers-reduced-transparency:reduce){.sidebar{background:#faf9f7!important;-webkit-backdrop-filter:none;backdrop-filter:none}}
 </style></head><body>
 <header class="topbar"><div class="brand" onclick="home()"><span class="brand-mark">⚕</span><span>ТестПатан ВГМУ<small>Патологическая анатомия</small></span></div><div class="top-search"><span>⌕</span><div id="searchDrop" class="search-drop" hidden></div><input id="siteSearch" placeholder="Поиск по темам, разделам, терминам…" autocomplete="off" oninput="searchSuggest(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();searchSite(this.value)}else if(event.key==='Escape')searchClose()"></div><div class="top-actions"><button class="icon-action" title="Уведомления" onclick="toast('Новых уведомлений пока нет')">♧</button><nav id="nav"></nav></div></header>
 <aside class="sidebar" id="sidebar"><div class="side-links"><button class="side-link active" data-side="home" onclick="home()"><span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11 12 3.8l8.5 7.2"/><path d="M5.5 9.8V20h13V9.8"/><path d="M10 20v-5.5h4V20"/></svg></span>Главная</button><button class="side-link" onclick="sectionsPage()"><span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 9 4.5-9 4.5-9-4.5z"/><path d="m3 12 9 4.5 9-4.5"/><path d="m3 16.5 9 4.5 9-4.5"/></svg></span>Разделы</button><button class="side-link" onclick="profile()"><span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="14" width="4" height="6.5" rx="1.2"/><rect x="10" y="9" width="4" height="11.5" rx="1.2"/><rect x="16.5" y="4" width="4" height="16.5" rx="1.2"/></svg></span>Статистика</button><button class="side-link" onclick="favoritesPage()"><span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3.5h11V21L12 16.8 6.5 21z"/></svg></span>Избранное</button><button class="side-link" onclick="materialsPage()"><span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5C10 5 7 4.5 3.5 5v13.5c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5C17 4.5 14 5 12 6.5z"/><path d="M12 6.5V20"/></svg></span>Материалы</button></div><div class="side-quote">«Патологическая анатомия — это язык, на котором организм говорит с врачом.»</div><div class="side-bottom-art" aria-hidden="true"></div></aside>
-<main id="app"></main>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs><filter id="lg-refract" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB"><feImage href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='100' preserveAspectRatio='none'><defs><linearGradient id='x' x1='0' x2='1' y1='0' y2='0'><stop offset='0' stop-color='%23ff0000'/><stop offset='.5' stop-color='%23800000'/><stop offset='1' stop-color='%23000000'/></linearGradient><linearGradient id='y' x1='0' x2='0' y1='0' y2='1'><stop offset='0' stop-color='%2300ff00'/><stop offset='.5' stop-color='%23008000'/><stop offset='1' stop-color='%23000000'/></linearGradient></defs><rect width='200' height='100' fill='%23000'/><rect width='200' height='100' fill='url(%23x)' style='mix-blend-mode:screen'/><rect width='200' height='100' fill='url(%23y)' style='mix-blend-mode:screen'/></svg>" x="0" y="0" width="100%" height="100%" preserveAspectRatio="none" result="map"/><feDisplacementMap in="SourceGraphic" in2="map" scale="26" xChannelSelector="R" yChannelSelector="G"/></filter></defs></svg><main id="app"></main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
 <script>
@@ -158,7 +192,7 @@ const MODES={macro:['📷','Макро',''],micro:['🔬','Микро',''],theor
 const BLOCKS={general:'Общая патология',specific:'Частная патология'};
 let me=null,isAdmin=false,topics=[],Q=null;
 let routeReplay=false;
-function markRoute(route,replace=false){if(routeReplay)return;const url='#/'+route.replace(/^\/+/, '');if(location.hash===url)return;(replace?history.replaceState:history.pushState).call(history,{route},'',url)}
+function markRoute(route,replace=false){syncSide(route);if(routeReplay)return;const url='#/'+route.replace(/^\/+/, '');if(location.hash===url)return;(replace?history.replaceState:history.pushState).call(history,{route},'',url)}
 window.addEventListener('popstate',()=>{routeReplay=true;const r=location.hash.replace(/^#\/?/,'');restoreRoute(r).finally(()=>{routeReplay=false})});
 async function restoreRoute(r){if(!r||r==='home')return home(false);const a=r.split('/');if(a[0]==='login')return authPage();if(a[0]==='mode'&&a[1])return pick(a[1],false);if(a[0]==='topic'&&a[1]&&a[2])return pickTopic(a[1],a[2],false);if(a[0]==='profile'&&me)return profile(false);if(a[0]==='favorites')return favoritesPage(false);if(a[0]==='favorite'&&a[1])return openFavorite(a[1],false);if(a[0]==='tests')return testsPage(false);if(a[0]==='materials')return materialsPage(false);if(a[0]==='admincontent'&&isAdmin)return adminContent(false);if(a[0]==='adminmaterials'&&isAdmin)return adminMaterials(false);if(a[0]==='admin'&&isAdmin)return admin(false);if(a[0]==='stats'&&isAdmin)return adminStats(a[1]||'');if(a[0]==='edit'&&isAdmin)return editQ(a[1]||undefined,false);if(a[0]==='quiz'&&Q)return showQ();return home(false)}
 
@@ -435,5 +469,38 @@ async function delQ(id){
   error?fail($('#e'),error):admin();
 }
 init();
+
+/* ===== Liquid glass tab bar: линза скользит за активной вкладкой и «подхватывается» пальцем ===== */
+const SIDE_TABS=['home','sections','profile','favorites','materials'];
+function syncSide(route){const r=String(route||'').split('/')[0];if(r==='quiz')return;
+  const map={home:'home',sections:'sections',mode:'sections',topic:'sections',tests:'sections',profile:'profile',favorites:'favorites',favorite:'favorites',materials:'materials'};
+  const k=map[r]||'';document.querySelectorAll('#sidebar .side-link').forEach(x=>x.classList.toggle('active',!!k&&x.dataset.side===k))}
+(function initGlassTabs(){
+  const bar=document.getElementById('sidebar');if(!bar)return;
+  const tabs=[...bar.querySelectorAll('.side-link')];tabs.forEach((t,i)=>{if(SIDE_TABS[i])t.dataset.side=SIDE_TABS[i]});
+  const lens=document.createElement('div');lens.className='side-lens';bar.prepend(lens);
+  const mobile=()=>matchMedia('(max-width:700px)').matches;
+  const place=(el,instant)=>{if(!el||!mobile())return;const b=bar.getBoundingClientRect(),r=el.getBoundingClientRect();
+    const x=r.left-b.left+3,w=r.width-6;if(instant){lens.style.transition='none'}
+    const moved=lens.style.getPropertyValue('--x')!==x+'px';
+    lens.style.setProperty('--w',w+'px');lens.style.setProperty('--x',x+'px');
+    if(instant){void lens.offsetWidth;lens.style.transition=''}
+    else if(moved&&!drag){lens.classList.add('go');clearTimeout(place.t);place.t=setTimeout(()=>lens.classList.remove('go'),200)}};
+  const active=()=>tabs.find(t=>t.classList.contains('active'));
+  let drag=false,pid=null,startX=0,moved=false,downTab=null;
+  const nearest=x=>{let best=null,bd=1e9;tabs.forEach(t=>{const r=t.getBoundingClientRect(),d=Math.abs(x-(r.left+r.width/2));if(d<bd){bd=d;best=t}});return best};
+  const follow=x=>{const b=bar.getBoundingClientRect(),w=parseFloat(lens.style.getPropertyValue('--w'))||60;const nx=Math.max(3,Math.min(b.width-w-3,x-b.left-w/2));lens.style.setProperty('--x',nx+'px')};
+  bar.addEventListener('pointerdown',e=>{if(!mobile()||(e.pointerType==='mouse'&&e.button!==0))return;drag=true;moved=false;pid=e.pointerId;startX=e.clientX;downTab=nearest(e.clientX);lens.classList.add('press','drag');place(downTab,true);try{bar.setPointerCapture(pid)}catch(_){}});
+  bar.addEventListener('pointermove',e=>{if(!drag||e.pointerId!==pid)return;if(Math.abs(e.clientX-startX)>6)moved=true;if(moved)follow(e.clientX)});
+  const end=(e,cancel)=>{if(!drag||e.pointerId!==pid)return;drag=false;lens.classList.remove('press','drag');try{bar.releasePointerCapture(pid)}catch(_){}
+    const t=cancel?active():nearest(e.clientX);place(t||active());if(!cancel&&t){const was=active();if(t!==was||!moved)setTimeout(()=>t.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true})),90)}};
+  bar.addEventListener('pointerup',e=>end(e,false));bar.addEventListener('pointercancel',e=>end(e,true));
+  // родные клики мыши/пальца гасим — вместо них сработает наш (после анимации); клавиатура (detail=0) работает как обычно
+  bar.addEventListener('click',e=>{if(e.detail>0&&e.isTrusted){e.stopPropagation();e.preventDefault()}},true);
+  new MutationObserver(()=>{if(!drag)place(active())}).observe(bar,{attributes:true,subtree:true,attributeFilter:['class']});
+  addEventListener('resize',()=>place(active(),true));addEventListener('orientationchange',()=>setTimeout(()=>place(active(),true),200));
+  place(active(),true);setTimeout(()=>place(active(),true),300);if(document.fonts?.ready)document.fonts.ready.then(()=>place(active(),true));
+})();
+
 document.addEventListener('click',e=>{if(!e.target.closest('.top-search'))searchClose()});
 </script></body></html>
