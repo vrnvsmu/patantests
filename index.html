@@ -220,6 +220,14 @@ main#app{margin:0 0 0 198px;max-width:none;padding:24px 28px 42px;min-height:cal
 .notif-empty{padding:30px 16px;text-align:center;color:#8a8f9c;font-size:14px}
 .notif-empty div{font-size:28px;margin-bottom:6px;opacity:.6}
 @media(max-width:700px){.icon-action.bell{display:grid!important;position:absolute;top:8px;right:12px;z-index:5}.notif-wrap{position:static}.top-actions{position:static}.notif-panel{position:fixed;left:12px;right:12px;top:64px;width:auto;max-width:none}.topbar{position:relative!important}}
+
+.q-sub{padding:2px 0 6px}
+.q-sub.multi{margin:0 0 14px;padding:14px 16px 12px;border:1px solid #efe4e9;border-radius:14px;background:#fffcfd}
+.q-sub-head{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:26px}
+.q-sub-num{font:700 12px/1 Inter,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#a05f7b}
+.q-sub h3{margin:8px 0 12px}
+.q-sub .fb:empty{display:none}
+@media(min-width:901px){.quiz-layout:not(.no-image) .quiz-visual{position:sticky;top:84px;align-self:start}}
 </style></head><body>
 <header class="topbar"><div class="brand" onclick="home()"><span class="brand-mark">⚕</span><span>ТестПатан ВГМУ<small>Патологическая анатомия</small></span></div><div class="top-search"><span>⌕</span><div id="searchDrop" class="search-drop" hidden></div><input id="siteSearch" placeholder="Поиск по темам, разделам, терминам…" autocomplete="off" oninput="searchSuggest(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();searchSite(this.value)}else if(event.key==='Escape')searchClose()"></div><div class="top-actions"><div class="notif-wrap"><button class="icon-action bell" id="bellBtn" title="Уведомления" aria-label="Уведомления" onclick="toggleNotifs(event)"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 1 1 12 0c0 4.6 1.6 6.2 2 6.5H4c.4-.3 2-1.9 2-6.5z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg><span class="bell-badge" id="bellBadge" hidden></span></button><div id="notifPanel" class="notif-panel" hidden></div></div><nav id="nav"></nav></div></header>
 <aside class="sidebar" id="sidebar"><div class="side-links"><button class="side-link active" data-side="home" onclick="home()"><span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11 12 3.8l8.5 7.2"/><path d="M5.5 9.8V20h13V9.8"/><path d="M10 20v-5.5h4V20"/></svg></span>Главная</button><button class="side-link" onclick="sectionsPage()"><span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 9 4.5-9 4.5-9-4.5z"/><path d="m3 12 9 4.5 9-4.5"/><path d="m3 16.5 9 4.5 9-4.5"/></svg></span>Разделы</button><button class="side-link" onclick="profile()"><span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="14" width="4" height="6.5" rx="1.2"/><rect x="10" y="9" width="4" height="11.5" rx="1.2"/><rect x="16.5" y="4" width="4" height="16.5" rx="1.2"/></svg></span>Статистика</button><button class="side-link" onclick="favoritesPage()"><span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3.5h11V21L12 16.8 6.5 21z"/></svg></span>Избранное</button><button class="side-link" onclick="materialsPage()"><span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5C10 5 7 4.5 3.5 5v13.5c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5C17 4.5 14 5 12 6.5z"/><path d="M12 6.5V20"/></svg></span>Материалы</button></div><div class="side-quote">«Патологическая анатомия — это язык, на котором организм говорит с врачом.»</div><div class="side-bottom-art" aria-hidden="true"></div></aside>
@@ -317,20 +325,24 @@ async function startFavorites(){markRoute('quiz');
   const fav={};try{const r=await sb.from('question_favorites').select('question_id').eq('user_id',me.id);(r.data||[]).forEach(x=>fav[x.question_id]=true)}catch(e){}
   Q={id:data.attempt_id,qs:data.questions,i:0,mode:'favorites',t0:Date.now(),favorites:fav}; showQ();
 }
+function groupTasks(qs){const map=new Map(),tasks=[];qs.forEach(q=>{const key=q.image_path||('q:'+q.id);if(!map.has(key)){const t=[];map.set(key,t);tasks.push(t)}map.get(key).push(q)});tasks.forEach(t=>t.sort((x,y)=>String(x.created_at||'').localeCompare(String(y.created_at||''))));return tasks}
+const taskDone=t=>t.every(q=>Q.answers?.[q.id]);
 function showQ(){
-  const q=Q.qs[Q.i],pc=Math.round((Q.i+1)/Q.qs.length*100),hasImage=!!q.image_path;
-  if(!Q.order)Q.order={};
-  if(!Q.order[q.id])Q.order[q.id]=[...(q.options||[])].sort(()=>Math.random()-.5);
-  if(!Q.answers)Q.answers={};
-  const nav=Q.qs.map((x,i)=>`<button class="${i===Q.i?'current ':''}${Q.answers[x.id]?'done ':'skipped'}" onclick="goQ(${i})" aria-label="Вопрос ${i+1}">${i+1}</button>`).join('');
-  const visual=hasImage?`<div class="zoom-wrap"><img class="photo" src="${esc(pub(q.image_path))}" alt="Препарат" onclick="zoomImage(this.src)"><button class="zoom-btn" onclick="zoomImage('${esc(pub(q.image_path))}')" title="Увеличить изображение" aria-label="Увеличить изображение">⌕</button></div>`:'';
-  app.innerHTML=`<div class="panel"><div class="q-head-tools"><div class="muted">${esc(MODES[Q.mode]?.[1]||Q.mode)} · Вопрос ${Q.i+1} из ${Q.qs.length}</div><button class="favorite-btn ${Q.favorites?.[q.id]?'on':''}" onclick="toggleFavorite('${q.id}')">${Q.favorites?.[q.id] ? '★ В избранном' : '☆ В избранное'}</button></div><div class="progress"><span style="width:${pc}%"></span></div><div class="question-nav" aria-label="Выбор номера задания">${nav}</div><div class="quiz-layout ${hasImage?'':'no-image'}"><div class="quiz-visual ${hasImage?'':'empty'}">${visual}</div><div class="quiz-content"><h3>${esc(q.prompt)}</h3><div class="answers" id="ans">`+Q.order[q.id].map(o=>`<button class="answer" data-id="${o.id}">${esc(o.text)}</button>`).join('')+`</div><div id="fb"></div><div class="row"><button class="secondary" onclick="skipQ()">${Q.i===Q.qs.length-1?'К результатам':'Пропустить'}</button><button onclick="nextQ()">${Q.i===Q.qs.length-1?'Завершить тест':'Следующий вопрос →'}</button></div></div></div></div>`;
-  const prior=Q.answers[q.id];
-  document.querySelectorAll('#ans button').forEach(b=>{b.onclick=()=>answer(b,q);if(prior){b.disabled=true;if(b.dataset.id===prior.chosen)b.classList.add(prior.correct?'correct':'wrong');if(prior.correctId&&b.dataset.id===prior.correctId)b.classList.add('correct')}});
-  if(prior&&Q.mode!=='exam')$('#fb').innerHTML=prior.explanation?`<div class="feedback">${esc(prior.explanation)}</div>`:'';
+  if(!Q.tasks)Q.tasks=groupTasks(Q.qs);
+  const task=Q.tasks[Q.i],first=task[0],many=task.length>1,hasImage=!!first.image_path,pc=Math.round((Q.i+1)/Q.tasks.length*100);
+  Q.order=Q.order||{};Q.answers=Q.answers||{};
+  task.forEach(q=>{if(!Q.order[q.id])Q.order[q.id]=[...(q.options||[])].sort(()=>Math.random()-.5)});
+  const nav=Q.tasks.map((t,i)=>`<button class="${i===Q.i?'current ':''}${taskDone(t)?'done ':'skipped'}" onclick="goQ(${i})" aria-label="Задание ${i+1}">${i+1}</button>`).join('');
+  const visual=hasImage?`<div class="zoom-wrap"><img class="photo" src="${esc(pub(first.image_path))}" alt="Препарат" onclick="zoomImage(this.src)"><button class="zoom-btn" onclick="zoomImage('${esc(pub(first.image_path))}')" title="Увеличить изображение" aria-label="Увеличить изображение">⌕</button></div>`:'';
+  const blocks=task.map((q,k)=>`<div class="q-sub ${many?'multi':''}"><div class="q-sub-head">${many?`<span class="q-sub-num">Вопрос ${k+1} из ${task.length}</span>`:'<span></span>'}<button class="favorite-btn ${Q.favorites?.[q.id]?'on':''}" onclick="toggleFavorite('${q.id}')">${Q.favorites?.[q.id]?'★ В избранном':'☆ В избранное'}</button></div><h3>${esc(q.prompt)}</h3><div class="answers" data-q="${q.id}">`+Q.order[q.id].map(o=>`<button class="answer" data-id="${o.id}">${esc(o.text)}</button>`).join('')+`</div><div class="fb" data-q="${q.id}"></div></div>`).join('');
+  const last=Q.i===Q.tasks.length-1;
+  app.innerHTML=`<div class="panel"><div class="q-head-tools"><div class="muted">${esc(MODES[Q.mode]?.[1]||Q.mode)} · Задание ${Q.i+1} из ${Q.tasks.length}${many?` · вопросов к фото: ${task.length}`:''}</div></div><div class="progress"><span style="width:${pc}%"></span></div><div class="question-nav" aria-label="Выбор номера задания">${nav}</div><div class="quiz-layout ${hasImage?'':'no-image'}"><div class="quiz-visual ${hasImage?'':'empty'}">${visual}</div><div class="quiz-content">${blocks}<div class="row"><button class="secondary" onclick="skipQ()">${last?'К результатам':'Пропустить'}</button><button onclick="nextQ()">${last?'Завершить тест':'Следующее задание →'}</button></div></div></div></div>`;
+  task.forEach(q=>{const prior=Q.answers[q.id],fb=document.querySelector(`.fb[data-q="${q.id}"]`);
+    document.querySelectorAll(`.answers[data-q="${q.id}"] button`).forEach(b=>{b.onclick=()=>answer(b,q);if(prior){b.disabled=true;if(b.dataset.id===prior.chosen)b.classList.add(Q.mode==='exam'?'sel':prior.correct?'correct':'wrong');if(prior.correctId&&b.dataset.id===prior.correctId)b.classList.add('correct')}});
+    if(prior&&fb)fb.innerHTML=Q.mode==='exam'?'<div class="feedback">Ответ сохранён.</div>':(prior.explanation?`<div class="feedback">${esc(prior.explanation)}</div>`:'')});
 }
-function goQ(i){if(i<0||i>=Q.qs.length)return;Q.i=i;showQ()}
-function skipQ(){if(Q.i<Q.qs.length-1){Q.i++;showQ()}else finish()}
+function goQ(i){if(i<0||i>=Q.tasks.length)return;Q.i=i;showQ()}
+function skipQ(){if(Q.i<Q.tasks.length-1){Q.i++;showQ()}else finish()}
 function zoomImage(src){
   const el=document.createElement('div');el.className='zoom-overlay';
   el.innerHTML=`<div class="zoom-toolbar"><span>Колесо мыши — масштаб · Перетаскивание — перемещение · Esc — закрыть</span><button type="button" class="zoom-close" aria-label="Закрыть">×</button></div><img src="${esc(src)}" alt="Увеличенное изображение" draggable="false">`;
@@ -345,19 +357,19 @@ function zoomImage(src){
 }
 
 async function answer(btn,q){
-  const bs=[...document.querySelectorAll('#ans button')];bs.forEach(b=>b.disabled=true);
+  const box=btn.closest('.answers'),fb=document.querySelector(`.fb[data-q="${q.id}"]`),bs=[...box.querySelectorAll('button')];bs.forEach(b=>b.disabled=true);
   const {data,error}=await sb.rpc('check_answer',{p_attempt:Q.id,p_question:q.id,p_option:btn.dataset.id});
-  if(error){fail($('#fb'),error);bs.forEach(b=>b.disabled=false);return}
+  if(error){fail(fb,error);bs.forEach(b=>b.disabled=false);return}
   const prior={chosen:btn.dataset.id,correct:Q.mode==='exam'?null:!!data.is_correct,correctId:Q.mode==='exam'?null:data.correct_option_id,explanation:Q.mode==='exam'?'':(data.explanation||'')};
-  Q.answers=q.id?Q.answers||{}:{};Q.answers[q.id]=prior;
-  if(Q.mode==='exam'){btn.classList.add('sel');$('#fb').innerHTML='<div class="feedback">Ответ сохранён.</div>';return}
+  Q.answers=Q.answers||{};Q.answers[q.id]=prior;
+  const nb=document.querySelectorAll('.question-nav button')[Q.i];if(nb&&taskDone(Q.tasks[Q.i])){nb.classList.add('done');nb.classList.remove('skipped')}
+  if(Q.mode==='exam'){btn.classList.add('sel');fb.innerHTML='<div class="feedback">Ответ сохранён.</div>';return}
   bs.forEach(b=>{if(b.dataset.id===data.correct_option_id)b.classList.add('correct')});
   if(!data.is_correct)btn.classList.add('wrong');
-  $('#fb').innerHTML=(data.explanation?`<div class="feedback">${esc(data.explanation)}</div>`:'');
-  document.querySelectorAll('.question-nav button')[Q.i]?.classList.add('done');
+  fb.innerHTML=(data.explanation?`<div class="feedback">${esc(data.explanation)}</div>`:'');
 }
 
-function nextQ(){Q.i++;Q.i<Q.qs.length?showQ():finish()}
+function nextQ(){Q.i++;Q.i<Q.tasks.length?showQ():finish()}
 async function finish(){
   const {data,error}=await sb.rpc('finish_attempt',{p_attempt:Q.id});
   if(error){fail(app,error);return}
