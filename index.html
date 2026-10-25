@@ -522,7 +522,7 @@ function readDocxPreview(){for(const el of document.querySelectorAll('[data-di]'
 function publishAndCommitDocxImport(){const box=$('#di-publish');if(box)box.checked=true;return commitDocxImport()}
 function normalizeQuestionForDuplicate(s){return String(s||'').normalize('NFKC').toLocaleLowerCase('ru').replace(/ё/g,'е').replace(/[“”„«»"'`]/g,'').replace(/[^\p{L}\p{N}]+/gu,' ').trim().replace(/\s+/g,' ')}
 async function checkDocxDuplicates(){
-  if(!isAdmin)return home();const result=$('#di-result');if(result)result.innerHTML='<div class="notice">Проверяем дубликаты во всех темах…</div>';
+  if(!isAdmin)return false;const result=$('#di-result');if(result)result.innerHTML='<div class="notice">Проверяем дубликаты во всех темах…</div>';
   try{
     readDocxPreview();
     // Сканируем всю базу вопросов без фильтра по выбранному режиму или теме.
@@ -554,8 +554,8 @@ async function checkDocxDuplicates(){
       let note=h.parentElement.querySelector('.duplicate-note');
       if(q.isDuplicate){if(!note){note=document.createElement('div');note.className='notice duplicate-note';h.after(note)}note.textContent=q.duplicateReason}else if(note)note.remove();
     });
-    if(result)result.innerHTML=`<div class="feedback"><b>Проверка завершена по всем темам.</b><br>Повторов в базе (в любых темах и режимах): ${existingCount}. Повторов внутри документа: ${insideCount}. Дубликаты будут пропущены при импорте.</div>`;
-  }catch(e){if(result)result.innerHTML=`<div class="err">Не удалось проверить дубликаты во всех темах: ${esc(e.message||e)}</div>`}
+    if(result)result.innerHTML=`<div class="feedback"><b>Проверка завершена по всем темам.</b><br>Повторов в базе (в любых темах и режимах): ${existingCount}. Повторов внутри документа: ${insideCount}. Дубликаты будут пропущены при импорте.</div>`;return true;
+  }catch(e){if(result)result.innerHTML=`<div class="err">Не удалось проверить дубликаты во всех темах: ${esc(e.message||e)}. Импорт остановлен, чтобы не добавить повторы.</div>`;return false}
 }
 async function commitDocxImport(){
   const result=$('#di-result');result.innerHTML='';
@@ -567,12 +567,13 @@ async function commitDocxImport(){
     const section=$('#di-mode').value,topic=topics.find(t=>String(t.id)===$('#di-topic').value);
     if(!topic)throw new Error('Выберите тему.');
     if(section==='macro'&&!['general','specific'].includes(topic.block))throw new Error('Выберите корректную тему.');
-    await checkDocxDuplicates();const publish=$('#di-publish').checked;
+    const duplicatesChecked=await checkDocxDuplicates();if(!duplicatesChecked)throw new Error('Не удалось завершить проверку дубликатов. Импорт отменён.');const publish=$('#di-publish').checked;
     const btn=result.parentElement.querySelector('button');if(btn)btn.disabled=true;
     let imported=0,duplicates=0;const failures=[];
     result.innerHTML='<div class="notice">Импортируем вопросы. Пожалуйста, не закрывайте страницу…</div>';
     for(let i=0;i<docxImportRows.length;i++){
       const q=docxImportRows[i];let qid=null;
+      if(q.isDuplicate){duplicates++;result.innerHTML=`<div class="notice">Импорт выполняется: ${i+1} из ${docxImportRows.length}…</div><div class="muted">Успешно добавлено: ${imported} · Дубликатов пропущено: ${duplicates} · Ошибок: ${failures.length}</div>`;continue}
       try{
         // Explanation is stored in question_answers, not questions. Some deployed schemas do not have questions.explanation.
         const row={section,block:topic.block,topic_id:topic.id,prompt:q.prompt,is_exam:false,is_published:false,created_by:me?.id||null};
@@ -719,8 +720,11 @@ async function adminTrash(mark=true){
   if(mark)markRoute('admintrash');if(!isAdmin)return home();app.innerHTML='<h2>Корзина вопросов</h2><p class="muted">Загрузка…</p>';
   const {data,error}=await sb.from('question_trash').select('*').order('deleted_at',{ascending:false}).limit(500);
   if(error){app.innerHTML=`<h2>Корзина вопросов</h2><div class="err">${esc(error.message)}</div><p class="muted">Примените миграцию 0011_question_trash.sql в Supabase.</p><button class="secondary" onclick="admin()">Назад</button>`;return}
-  app.innerHTML=`<h2>Корзина вопросов</h2><p class="muted">Удалённые вопросы хранятся здесь, пока вы не удалите их окончательно.</p><div class="row"><button class="secondary" onclick="admin()">← Назад к вопросам</button></div>${(data||[]).map(r=>`<div class="material-card"><b>${esc(r.question_data?.prompt||'Вопрос')}</b><small class="muted">${esc(MODES[r.question_data?.section]?.[1]||r.question_data?.section||'')} · Удалён ${r.deleted_at?new Date(r.deleted_at).toLocaleString('ru-RU'):''}</small><div class="row"><button onclick="restoreQuestionFromTrash('${r.id}')">↩ Восстановить</button><button class="secondary" onclick="purgeQuestionTrash('${r.id}')">Удалить навсегда</button></div></div>`).join('')||'<div class="favorite-empty"><h3>Корзина пуста</h3><p>Удалённые вопросы будут появляться здесь.</p></div>'}`;
+  app.innerHTML=`<h2>Корзина вопросов</h2><p class="muted">Удалённые вопросы хранятся здесь, пока вы не удалите их окончательно.</p><div class="row"><button class="secondary" onclick="admin()">← Назад к вопросам</button><label style="display:flex;align-items:center;gap:8px;margin:0"><input type="checkbox" id="trashSelectAll" onchange="toggleAllTrash(this.checked)"> Выбрать все (${(data||[]).length})</label><button class="secondary" onclick="purgeSelectedTrash()">Удалить выбранные навсегда (<span id="trashSelectedCount">0</span>)</button></div>${(data||[]).map(r=>`<div class="material-card"><label style="display:flex;align-items:flex-start;gap:10px"><input type="checkbox" class="trash-select" value="${r.id}" onchange="updateTrashSelectedCount()" aria-label="Выбрать удалённый вопрос"><span><b>${esc(r.question_data?.prompt||'Вопрос')}</b><small class="muted" style="display:block">${esc(MODES[r.question_data?.section]?.[1]||r.question_data?.section||'')} · Удалён ${r.deleted_at?new Date(r.deleted_at).toLocaleString('ru-RU'):''}</small></span></label><div class="row"><button onclick="restoreQuestionFromTrash('${r.id}')">↩ Восстановить</button><button class="secondary" onclick="purgeQuestionTrash('${r.id}')">Удалить навсегда</button></div></div>`).join('')||'<div class="favorite-empty"><h3>Корзина пуста</h3><p>Удалённые вопросы будут появляться здесь.</p></div>'}`;
 }
+function updateTrashSelectedCount(){const boxes=[...document.querySelectorAll('.trash-select')],n=boxes.filter(b=>b.checked).length;const count=document.getElementById('trashSelectedCount');if(count)count.textContent=n;const all=document.getElementById('trashSelectAll');if(all){all.checked=boxes.length>0&&n===boxes.length;all.indeterminate=n>0&&n<boxes.length}}
+function toggleAllTrash(checked){document.querySelectorAll('.trash-select').forEach(b=>b.checked=checked);updateTrashSelectedCount()}
+async function purgeSelectedTrash(){if(!isAdmin)return home();const ids=[...document.querySelectorAll('.trash-select:checked')].map(b=>b.value);if(!ids.length)return toast('Сначала выберите вопросы.');if(!confirm(`Удалить навсегда ${ids.length} вопросов? Восстановить их будет нельзя.`))return;let removed=0;const failures=[];for(const id of ids){const {error}=await sb.from('question_trash').delete().eq('id',id);if(error)failures.push(`${id}: ${error.message}`);else removed++}await adminTrash(false);toast(`Удалено навсегда: ${removed}; ошибок: ${failures.length}`);if(failures.length)alert('Не удалось удалить некоторые записи:\n'+failures.join('\n'))}
 async function restoreQuestionFromTrash(trashId){
   if(!isAdmin)return home();
   try{const {data:r,error}=await sb.from('question_trash').select('*').eq('id',trashId).single();if(error)throw error;const q={...r.question_data};
