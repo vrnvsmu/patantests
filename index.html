@@ -510,26 +510,52 @@ function parseQuestionLines(lines){
 function normAnswer(s){return normalizeImportText(s).toLocaleLowerCase('ru').replace(/[“”„«»"']/g,'').replace(/[.,;:!?]+$/,'').replace(/\s+/g,' ')}
 async function parseDocxImport(){
   const box=$('#docxerr'),preview=$('#docxpreview');box.innerHTML='';preview.innerHTML='';
-  try{if(!isAdmin)throw new Error('Импорт доступен только администратору.');const file=$('#docxfile').files[0];if(!file)throw new Error('Выберите файл .docx.');if(!/\.docx$/i.test(file.name))throw new Error('Поддерживается только формат .docx.');if(file.size>20*1024*1024)throw new Error('Файл больше 20 МБ.');if(typeof JSZip==='undefined')throw new Error('Не загрузился модуль чтения DOCX. Обновите страницу и попробуйте ещё раз.');const zip=await JSZip.loadAsync(file);const entry=zip.file('word/document.xml');if(!entry)throw new Error('В DOCX не найден основной текст документа.');const lines=parseDocxParagraphs(await entry.async('string'));docxImportRows=parseQuestionLines(lines);if(!docxImportRows.length)throw new Error('Не распознаны вопросы. Ожидается нумерация «1. Текст вопроса» и строки вариантов.');renderDocxPreview(file.name);
+  try{if(!isAdmin)throw new Error('Импорт доступен только администратору.');const file=$('#docxfile').files[0];if(!file)throw new Error('Выберите файл .docx.');if(!/\.docx$/i.test(file.name))throw new Error('Поддерживается только формат .docx.');if(file.size>20*1024*1024)throw new Error('Файл больше 20 МБ.');if(typeof JSZip==='undefined')throw new Error('Не загрузился модуль чтения DOCX. Обновите страницу и попробуйте ещё раз.');const zip=await JSZip.loadAsync(file);const entry=zip.file('word/document.xml');if(!entry)throw new Error('В DOCX не найден основной текст документа.');const lines=parseDocxParagraphs(await entry.async('string'));docxImportRows=parseQuestionLines(lines);if(!docxImportRows.length)throw new Error('Не распознаны вопросы. Ожидается нумерация «1. Текст вопроса» и строки вариантов.');renderDocxPreview(file.name);await checkDocxDuplicates();
   }catch(e){box.innerHTML=`<div class="err">${esc(e.message||e)}</div>`}
 }
 function renderDocxPreview(filename=''){
   const good=docxImportRows.filter(q=>!q.errors.length).length;
   const topicOptions=[...topics].sort((a,b)=>({general:0,specific:1}[a.block]-{general:0,specific:1}[b.block])||a.sort_order-b.sort_order).map(t=>`<option value="${t.id}">${esc(BLOCKS[t.block]||t.block)}: ${esc(t.title)}</option>`).join('');
-  $('#docxpreview').innerHTML=`<div class="notice">Файл: ${esc(filename||'DOCX')} · Распознано вопросов: <b>${docxImportRows.length}</b> · Без ошибок: <b>${good}</b> · Требуют проверки: <b>${docxImportRows.length-good}</b>. Проверьте каждый вопрос перед импортом.</div><div class="panel"><div class="content-edit-grid"><div><label>Режим</label><select id="di-mode" onchange="checkDocxDuplicates()"><option value="macro">Макро</option><option value="micro">Микро</option><option value="theory" selected>Теория</option></select></div><div><label>Тема</label><select id="di-topic" onchange="checkDocxDuplicates()">${topicOptions}</select></div><div class="wide"><label><input type="checkbox" id="di-publish"> Сразу опубликовать все импортируемые вопросы</label><p class="muted">Если флажок снят, вопросы сохранятся как черновики. Можно также нажать отдельную кнопку публикации ниже.</p></div></div></div>${docxImportRows.map((q,i)=>`<div class="panel" style="margin:14px 0"><h3>Вопрос ${i+1} ${q.errors.length?'<span style="color:#b4233d;font-size:13px">· Проверьте</span>':'<span style="color:#16803a;font-size:13px">· OK</span>'}</h3>${q.errors.length?`<div class="err">${q.errors.map(esc).join(' · ')}</div>`:''}<label>Текст вопроса</label><textarea data-di="prompt" data-i="${i}">${esc(q.prompt)}</textarea>${q.options.map((o,j)=>`<label>Вариант ${j+1} ${j===q.correctIndex?'— правильный':''}</label><input data-di="option" data-i="${i}" data-j="${j}" value="${esc(o)}">`).join('')}<label>Правильный ответ (должен совпадать с одним вариантом)</label><input data-di="correct" data-i="${i}" value="${esc(q.correct)}"><label>Пояснение</label><textarea data-di="explanation" data-i="${i}">${esc(q.explanation)}</textarea><div class="muted">После изменения текста правильный ответ будет сопоставлен повторно при импорте.</div></div>`).join('')}<div class="row"><button class="secondary" onclick="checkDocxDuplicates()">Проверить дубликаты</button><button onclick="commitDocxImport()">Импортировать вопросы (${docxImportRows.length})</button><button class="secondary" onclick="publishAndCommitDocxImport()">Импортировать и опубликовать</button><button class="secondary" onclick="admin()">Отмена</button></div><div id="di-result"></div>`;
+  $('#docxpreview').innerHTML=`<div class="notice">Файл: ${esc(filename||'DOCX')} · Распознано вопросов: <b>${docxImportRows.length}</b> · Без ошибок: <b>${good}</b> · Требуют проверки: <b>${docxImportRows.length-good}</b>. Проверьте каждый вопрос перед импортом.</div><div class="panel"><div class="content-edit-grid"><div><label>Режим</label><select id="di-mode"><option value="macro">Макро</option><option value="micro">Микро</option><option value="theory" selected>Теория</option></select></div><div><label>Тема</label><select id="di-topic">${topicOptions}</select></div><div class="wide"><label><input type="checkbox" id="di-publish"> Сразу опубликовать все импортируемые вопросы</label><p class="muted">Если флажок снят, вопросы сохранятся как черновики. Можно также нажать отдельную кнопку публикации ниже.</p></div></div></div>${docxImportRows.map((q,i)=>`<div class="panel" style="margin:14px 0"><h3>Вопрос ${i+1} ${q.errors.length?'<span style="color:#b4233d;font-size:13px">· Проверьте</span>':'<span style="color:#16803a;font-size:13px">· OK</span>'}</h3>${q.errors.length?`<div class="err">${q.errors.map(esc).join(' · ')}</div>`:''}<label>Текст вопроса</label><textarea data-di="prompt" data-i="${i}">${esc(q.prompt)}</textarea>${q.options.map((o,j)=>`<label>Вариант ${j+1} ${j===q.correctIndex?'— правильный':''}</label><input data-di="option" data-i="${i}" data-j="${j}" value="${esc(o)}">`).join('')}<label>Правильный ответ (должен совпадать с одним вариантом)</label><input data-di="correct" data-i="${i}" value="${esc(q.correct)}"><label>Пояснение</label><textarea data-di="explanation" data-i="${i}">${esc(q.explanation)}</textarea><div class="muted">После изменения текста правильный ответ будет сопоставлен повторно при импорте.</div></div>`).join('')}<div class="row"><button class="secondary" onclick="checkDocxDuplicates()">Проверить дубликаты</button><button onclick="commitDocxImport()">Импортировать вопросы (${docxImportRows.length})</button><button class="secondary" onclick="publishAndCommitDocxImport()">Импортировать и опубликовать</button><button class="secondary" onclick="admin()">Отмена</button></div><div id="di-result"></div>`;
 }
 function readDocxPreview(){for(const el of document.querySelectorAll('[data-di]')){const i=+el.dataset.i,q=docxImportRows[i];if(el.dataset.di==='prompt')q.prompt=el.value.trim();else if(el.dataset.di==='correct')q.correct=el.value.trim();else if(el.dataset.di==='explanation')q.explanation=el.value.trim();else if(el.dataset.di==='option')q.options[+el.dataset.j]=el.value.trim()}for(const q of docxImportRows){q.correctIndex=q.options.findIndex(x=>normAnswer(x)===normAnswer(q.correct));q.errors=[];if(!q.prompt)q.errors.push('Нет текста вопроса');if(q.options.filter(Boolean).length<2)q.errors.push('Нужно минимум 2 варианта');if(!q.correct)q.errors.push('Не указан правильный ответ');if(q.correctIndex<0)q.errors.push('Правильный ответ не совпал ни с одним вариантом')}}
 function publishAndCommitDocxImport(){const box=$('#di-publish');if(box)box.checked=true;return commitDocxImport()}
 function normalizeQuestionForDuplicate(s){return String(s||'').normalize('NFKC').toLocaleLowerCase('ru').replace(/ё/g,'е').replace(/[“”„«»"'`]/g,'').replace(/[^\p{L}\p{N}]+/gu,' ').trim().replace(/\s+/g,' ')}
 async function checkDocxDuplicates(){
-  if(!isAdmin)return home();const result=$('#di-result');if(result)result.innerHTML='<div class="notice">Проверяем повторы…</div>';
-  try{readDocxPreview();const section=$('#di-mode')?.value,topicId=$('#di-topic')?.value;if(!section||!topicId)throw new Error('Выберите режим и тему перед проверкой дубликатов.');
-    const {data,error}=await sb.from('questions').select('id,prompt').eq('section',section).eq('topic_id',topicId).limit(10000);if(error)throw error;
-    const existing=new Set((data||[]).map(q=>normalizeQuestionForDuplicate(q.prompt))),seen=new Set();let existingCount=0,insideCount=0;
-    for(const q of docxImportRows){const key=normalizeQuestionForDuplicate(q.prompt);q.isDuplicate=false;q.duplicateReason='';if(!key)continue;if(existing.has(key)){q.isDuplicate=true;q.duplicateReason='Уже есть в выбранной теме';existingCount++}else if(seen.has(key)){q.isDuplicate=true;q.duplicateReason='Повторяется в самом документе';insideCount++}else seen.add(key)}
-    [...document.querySelectorAll('#docxpreview .panel h3')].forEach((h,i)=>{const q=docxImportRows[i];if(!q)return;h.innerHTML=`Вопрос ${i+1} ${q.isDuplicate?'<span style="color:#b7791f;font-size:13px">· Дубликат — будет пропущен</span>':q.errors.length?'<span style="color:#b4233d;font-size:13px">· Проверьте</span>':'<span style="color:#16803a;font-size:13px">· OK</span>'}`;let note=h.parentElement.querySelector('.duplicate-note');if(q.isDuplicate){if(!note){note=document.createElement('div');note.className='notice duplicate-note';h.after(note)}note.textContent=q.duplicateReason}else if(note)note.remove()});
-    if(result)result.innerHTML=`<div class="feedback"><b>Проверка завершена.</b><br>Повторов в базе: ${existingCount}. Повторов внутри документа: ${insideCount}. Они будут пропущены при импорте.</div>`;
-  }catch(e){if(result)result.innerHTML=`<div class="err">${esc(e.message||e)}</div>`}
+  if(!isAdmin)return home();const result=$('#di-result');if(result)result.innerHTML='<div class="notice">Проверяем дубликаты во всех темах…</div>';
+  try{
+    readDocxPreview();
+    // Сканируем всю базу вопросов без фильтра по выбранному режиму или теме.
+    const {data,error}=await sb.from('questions').select('id,prompt,section,topic_id').limit(10000);
+    if(error)throw error;
+    const topicById=new Map((topics||[]).map(t=>[String(t.id),t]));
+    const existing=new Map();
+    for(const row of (data||[])){
+      const key=normalizeQuestionForDuplicate(row.prompt);if(!key)continue;
+      if(!existing.has(key))existing.set(key,[]);
+      existing.get(key).push(row);
+    }
+    const seen=new Set();let existingCount=0,insideCount=0;
+    for(const q of docxImportRows){
+      const key=normalizeQuestionForDuplicate(q.prompt);q.isDuplicate=false;q.duplicateReason='';
+      if(!key)continue;
+      const matches=existing.get(key)||[];
+      if(matches.length){
+        q.isDuplicate=true;existingCount++;
+        const labels=[...new Set(matches.map(row=>{const t=topicById.get(String(row.topic_id));return t?`${t.title} (${row.section||'без режима'})`:`тема ${row.topic_id||'не указана'} (${row.section||'без режима'})`;}))];
+        q.duplicateReason=`Уже есть в базе: ${labels.slice(0,4).join('; ')}${labels.length>4?`; и ещё ${labels.length-4}`:''}`;
+      }else if(seen.has(key)){
+        q.isDuplicate=true;q.duplicateReason='Повторяется в самом документе';insideCount++;
+      }else seen.add(key);
+    }
+    [...document.querySelectorAll('#docxpreview .panel h3')].forEach((h,i)=>{
+      const q=docxImportRows[i];if(!q)return;
+      h.innerHTML=`Вопрос ${i+1} ${q.isDuplicate?'<span style="color:#b7791f;font-size:13px">· Дубликат — будет пропущен</span>':q.errors.length?'<span style="color:#b4233d;font-size:13px">· Проверьте</span>':'<span style="color:#16803a;font-size:13px">· OK</span>'}`;
+      let note=h.parentElement.querySelector('.duplicate-note');
+      if(q.isDuplicate){if(!note){note=document.createElement('div');note.className='notice duplicate-note';h.after(note)}note.textContent=q.duplicateReason}else if(note)note.remove();
+    });
+    if(result)result.innerHTML=`<div class="feedback"><b>Проверка завершена по всем темам.</b><br>Повторов в базе (в любых темах и режимах): ${existingCount}. Повторов внутри документа: ${insideCount}. Дубликаты будут пропущены при импорте.</div>`;
+  }catch(e){if(result)result.innerHTML=`<div class="err">Не удалось проверить дубликаты во всех темах: ${esc(e.message||e)}</div>`}
 }
 async function commitDocxImport(){
   const result=$('#di-result');result.innerHTML='';
