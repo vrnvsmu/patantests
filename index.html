@@ -230,7 +230,29 @@ main#app{margin:0 0 0 198px;max-width:none;padding:24px 28px 42px;min-height:cal
 @media(min-width:901px){.quiz-layout:not(.no-image) .quiz-visual{position:sticky;top:84px;align-self:start}}
 
 .status-toggle{border:0;background:transparent;border-radius:10px;padding:7px 9px;font-size:20px;cursor:pointer;transition:transform .15s,background .15s}.status-toggle:hover{background:#f0edf5;transform:scale(1.08)}.status-toggle:disabled{opacity:.55;cursor:wait}
-.topic-item{min-width:0}.topic-open-button{cursor:pointer;min-width:0}.topic-lock-toggle{flex:0 0 auto;padding:7px 10px;font-size:.86rem}.topic-locked-icon{font-size:1.1rem;flex:0 0 auto}.topic-item-locked{opacity:.82}.topic-item-locked .topic-open-button small{display:block;color:var(--muted,#777);margin-top:5px}</style></head><body>
+.topic-item{min-width:0}.topic-open-button{cursor:pointer;min-width:0}.topic-lock-toggle{flex:0 0 auto;padding:7px 10px;font-size:.86rem}.topic-locked-icon{font-size:1.1rem;flex:0 0 auto}.topic-item-locked{opacity:.82}.topic-item-locked .topic-open-button small{display:block;color:var(--muted,#777);margin-top:5px}/* Ровная сетка номеров вопросов на мобильных экранах */
+@media(max-width:600px){
+  #app .question-nav{
+    display:grid;
+    grid-template-columns:repeat(6,minmax(0,1fr));
+    gap:8px;
+    width:100%;
+    align-items:stretch;
+  }
+  #app .question-nav button{
+    width:100%;
+    min-width:0;
+    margin:0;
+    padding:9px 0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    aspect-ratio:1 / 1;
+    border-radius:50%;
+    line-height:1;
+  }
+}
+</style></head><body>
 <header class="topbar"><div class="brand" onclick="home()"><span class="brand-mark">⚕</span><span>ТестПатан ВГМУ<small>Патологическая анатомия</small></span></div><div class="top-search"><span>⌕</span><div id="searchDrop" class="search-drop" hidden></div><input id="siteSearch" placeholder="Поиск по темам, разделам, терминам…" autocomplete="off" oninput="searchSuggest(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();searchSite(this.value)}else if(event.key==='Escape')searchClose()"></div><div class="top-actions"><div class="notif-wrap"><button class="icon-action bell" id="bellBtn" title="Уведомления" aria-label="Уведомления" onclick="toggleNotifs(event)"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 1 1 12 0c0 4.6 1.6 6.2 2 6.5H4c.4-.3 2-1.9 2-6.5z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg><span class="bell-badge" id="bellBadge" hidden></span></button><div id="notifPanel" class="notif-panel" hidden></div></div><nav id="nav"></nav></div></header>
 <aside class="sidebar" id="sidebar"><div class="side-links"><button class="side-link active" data-side="home" onclick="home()"><span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11 12 3.8l8.5 7.2"/><path d="M5.5 9.8V20h13V9.8"/><path d="M10 20v-5.5h4V20"/></svg></span>Главная</button><button class="side-link" onclick="sectionsPage()"><span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 9 4.5-9 4.5-9-4.5z"/><path d="m3 12 9 4.5 9-4.5"/><path d="m3 16.5 9 4.5 9-4.5"/></svg></span>Разделы</button><button class="side-link" onclick="profile()"><span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="14" width="4" height="6.5" rx="1.2"/><rect x="10" y="9" width="4" height="11.5" rx="1.2"/><rect x="16.5" y="4" width="4" height="16.5" rx="1.2"/></svg></span>Статистика</button><button class="side-link" onclick="favoritesPage()"><span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3.5h11V21L12 16.8 6.5 21z"/></svg></span>Избранное</button><button class="side-link" onclick="materialsPage()"><span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5C10 5 7 4.5 3.5 5v13.5c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5C17 4.5 14 5 12 6.5z"/><path d="M12 6.5V20"/></svg></span>Материалы</button></div><div class="side-quote">«Патологическая анатомия — это язык, на котором организм говорит с врачом.»</div><div class="side-bottom-art" aria-hidden="true"></div></aside>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs><filter id="lg-refract" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB"><feImage href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='100' preserveAspectRatio='none'><defs><linearGradient id='x' x1='0' x2='1' y1='0' y2='0'><stop offset='0' stop-color='%23ff0000'/><stop offset='.5' stop-color='%23800000'/><stop offset='1' stop-color='%23000000'/></linearGradient><linearGradient id='y' x1='0' x2='0' y1='0' y2='1'><stop offset='0' stop-color='%2300ff00'/><stop offset='.5' stop-color='%23008000'/><stop offset='1' stop-color='%23000000'/></linearGradient></defs><rect width='200' height='100' fill='%23000'/><rect width='200' height='100' fill='url(%23x)' style='mix-blend-mode:screen'/><rect width='200' height='100' fill='url(%23y)' style='mix-blend-mode:screen'/></svg>" x="0" y="0" width="100%" height="100%" preserveAspectRatio="none" result="map"/><feDisplacementMap in="SourceGraphic" in2="map" scale="26" xChannelSelector="R" yChannelSelector="G"/></filter></defs></svg><main id="app"></main>
