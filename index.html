@@ -440,7 +440,31 @@ async function admin(mark=true){if(mark)markRoute('admin');
 
 function selectAdminQuestion(id,checked){if(checked)selectedAdminQuestions.add(String(id));else selectedAdminQuestions.delete(String(id));const n=$('#selectedAdminCount');if(n)n.textContent=selectedAdminQuestions.size;const boxes=[...document.querySelectorAll('.admin-question-select')];const all=$('#selectAllAdminQuestions');if(all)all.checked=boxes.length>0&&boxes.every(b=>b.checked);}
 function toggleSelectAllAdminQuestions(checked){document.querySelectorAll('.admin-question-select').forEach(b=>{b.checked=checked;if(checked)selectedAdminQuestions.add(String(b.value));else selectedAdminQuestions.delete(String(b.value))});const n=$('#selectedAdminCount');if(n)n.textContent=selectedAdminQuestions.size;}
-async function deleteSelectedAdminQuestions(){if(!isAdmin)return home();const ids=[...selectedAdminQuestions];if(!ids.length){toast('Сначала выберите вопросы для удаления');return}const noun=ids.length===1?'вопрос':'вопросы';if(!confirm(`Переместить в корзину ${noun} (${ids.length})? Их можно будет восстановить.`))return;try{for(const id of ids)await moveQuestionToTrash(id);selectedAdminQuestions.clear();toast(`В корзину перемещено вопросов: ${ids.length}`);await admin(false)}catch(e){toast('Не удалось переместить вопросы в корзину: '+(e?.message||e))}}
+async function deleteSelectedAdminQuestions(){
+  if(!isAdmin)return home();
+  const ids=[...selectedAdminQuestions];
+  if(!ids.length){toast('Сначала выберите вопросы для удаления');return}
+  if(!confirm(`Переместить в корзину вопросы (${ids.length})? Их можно будет восстановить.`))return;
+  const btns=[...document.querySelectorAll('button[onclick="deleteSelectedAdminQuestions()"]')];btns.forEach(b=>{b.disabled=true;b.dataset.oldText=b.textContent;b.textContent='Удаление…'});
+  let succeeded=0;const failures=[];
+  // Убираем выбор сразу и обрабатываем каждый ID независимо: одна ошибка не прерывает всю пачку.
+  selectedAdminQuestions.clear();
+  for(const id of ids){
+    try{
+      await moveQuestionToTrash(id);succeeded++;
+      const box=[...document.querySelectorAll('.admin-question-select')].find(b=>String(b.value)===String(id));
+      if(box)box.closest('tr')?.remove();
+    }catch(e){failures.push({id,message:e?.message||String(e)});}
+    const counter=$('#selectedAdminCount');if(counter)counter.textContent='0';
+  }
+  try{await admin(false)}catch(e){console.error('Не удалось обновить список вопросов',e)}
+  if(failures.length===0)toast(`В корзину перемещено вопросов: ${succeeded} из ${ids.length}`);
+  else{
+    const details=failures.slice(0,3).map(x=>`${x.id}: ${x.message}`).join(' | ');
+    toast(`Перемещено ${succeeded} из ${ids.length}. Не удалось: ${failures.length}. ${details}`);
+    console.error('Ошибки массового удаления вопросов:',failures);
+  }
+}
 
 async function toggleQuestionPublish(id,isPublished){
   if(!isAdmin)return home();
@@ -653,7 +677,7 @@ async function saveQ(id){
 }
 async function delQ(id){
   if(!confirm('Переместить вопрос в корзину? Его можно будет восстановить.'))return;
-  try{await moveQuestionToTrash(id);toast('Вопрос перемещён в корзину');admin()}catch(e){fail($('#e'),e)}
+  try{await moveQuestionToTrash(id);toast('Вопрос перемещён в корзину');await admin(false)}catch(e){fail($('#e'),e)}
 }
 /* ===== Корзина вопросов: требуется миграция 0011_question_trash.sql ===== */
 async function moveQuestionToTrash(id){
