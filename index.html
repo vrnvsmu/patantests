@@ -158,8 +158,8 @@ main#app{margin:0 0 0 198px;max-width:none;padding:24px 28px 42px;min-height:cal
  .side-link span{transition:transform .35s cubic-bezier(.3,1.6,.5,1)}
  .side-link.active{color:#8b3f5e!important;font-weight:700}
  .side-link.active span{transform:translateY(-1px) scale(1.08)}
- .side-lens{display:block;position:absolute;z-index:1;left:0;top:4px;bottom:4px;width:var(--w,60px);translate:var(--x,0px) 0;scale:1 1;pointer-events:none;border-radius:30px;
-  transition:translate .62s cubic-bezier(.3,1.5,.45,1),width .62s cubic-bezier(.3,1.5,.45,1),scale .38s cubic-bezier(.3,1.7,.5,1),background .3s,box-shadow .3s;
+ .side-lens{display:block;position:absolute;z-index:1;left:0;top:4px;bottom:4px;width:var(--w,60px);translate:var(--x,0px) 0;scale:1 1;will-change:translate,width;pointer-events:none;border-radius:30px;
+  transition:translate .48s cubic-bezier(.22,.75,.25,1),width .48s cubic-bezier(.22,.75,.25,1),scale .38s cubic-bezier(.3,1.7,.5,1),background .3s,box-shadow .3s;
   background:radial-gradient(120% 140% at 30% 0%,rgba(255,255,255,.75) 0,rgba(255,255,255,.18) 55%),linear-gradient(180deg,rgba(166,92,124,.32),rgba(166,92,124,.15));
   border:1px solid rgba(255,255,255,.9);
   -webkit-backdrop-filter:blur(3px) saturate(220%) brightness(1.08) contrast(1.05);backdrop-filter:blur(3px) saturate(220%) brightness(1.08) contrast(1.05);
@@ -167,7 +167,7 @@ main#app{margin:0 0 0 198px;max-width:none;padding:24px 28px 42px;min-height:cal
  .side-lens.go{scale:1.2 .9}
  .side-lens.press{scale:1.16 1.1;background:radial-gradient(120% 140% at 30% 0%,rgba(255,255,255,.9) 0,rgba(255,255,255,.28) 60%),linear-gradient(180deg,rgba(166,92,124,.14),rgba(166,92,124,.04));
   box-shadow:0 14px 28px rgba(120,60,96,.28),0 2px 5px rgba(120,60,96,.2),inset 0 2px 1px #fff,inset 0 -4px 8px rgba(255,255,255,.65),inset 0 0 22px rgba(255,255,255,.7)}
- .side-lens.drag{transition:width .3s,scale .38s cubic-bezier(.3,1.7,.5,1),background .3s,box-shadow .3s}
+ .side-lens.drag{transition:width .12s linear,scale .38s cubic-bezier(.3,1.7,.5,1),background .3s,box-shadow .3s}
  .side-lens:after{content:"";position:absolute;left:14%;right:14%;top:3px;height:38%;border-radius:50%;background:linear-gradient(180deg,rgba(255,255,255,.8),rgba(255,255,255,0));opacity:.75;pointer-events:none}
  .side-lens.press{outline:0}
  @supports (backdrop-filter:url(#lg-refract)){
@@ -759,7 +759,8 @@ function syncSide(route){const r=String(route||'').split('/')[0];if(r==='quiz')r
   const active=()=>tabs.find(t=>t.classList.contains('active'));
   let drag=false,pid=null,startX=0,moved=false,downTab=null;
   const nearest=x=>{let best=null,bd=1e9;tabs.forEach(t=>{const r=t.getBoundingClientRect(),d=Math.abs(x-(r.left+r.width/2));if(d<bd){bd=d;best=t}});return best};
-  const follow=x=>{const b=bar.getBoundingClientRect(),w=parseFloat(lens.style.getPropertyValue('--w'))||60;const nx=Math.max(3,Math.min(b.width-w-3,x-b.left-w/2));lens.style.setProperty('--x',nx+'px')};
+  let moveFrame=0,latestX=0;
+  const follow=x=>{latestX=x;if(moveFrame)return;moveFrame=requestAnimationFrame(()=>{moveFrame=0;if(!drag)return;const b=bar.getBoundingClientRect(),w=parseFloat(lens.style.getPropertyValue('--w'))||60;const nx=Math.max(3,Math.min(b.width-w-3,latestX-b.left-w/2));lens.style.setProperty('--x',nx+'px')})};
   bar.addEventListener('pointerdown',e=>{if(!mobile()||(e.pointerType==='mouse'&&e.button!==0))return;drag=true;moved=false;pid=e.pointerId;startX=e.clientX;downTab=nearest(e.clientX);lens.classList.add('press','drag');place(downTab,true);try{bar.setPointerCapture(pid)}catch(_){}});
   bar.addEventListener('pointermove',e=>{if(!drag||e.pointerId!==pid)return;if(Math.abs(e.clientX-startX)>6)moved=true;if(moved)follow(e.clientX)});
   const end=(e,cancel)=>{if(!drag||e.pointerId!==pid)return;drag=false;lens.classList.remove('press','drag');try{bar.releasePointerCapture(pid)}catch(_){}
