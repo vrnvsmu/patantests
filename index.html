@@ -159,7 +159,7 @@ main#app{margin:0 0 0 198px;max-width:none;padding:24px 28px 42px;min-height:cal
  .side-link.active{color:#8b3f5e!important;font-weight:700}
  .side-link.active span{transform:translateY(-1px) scale(1.08)}
  .side-lens{display:block;position:absolute;z-index:1;left:0;top:4px;bottom:4px;width:var(--w,60px);translate:var(--x,0px) 0;scale:1 1;will-change:translate,width;pointer-events:none;border-radius:30px;
-  transition:translate .48s cubic-bezier(.22,.75,.25,1),width .48s cubic-bezier(.22,.75,.25,1),scale .38s cubic-bezier(.3,1.7,.5,1),background .3s,box-shadow .3s;
+  transition:translate .56s cubic-bezier(.16,1,.3,1),width .56s cubic-bezier(.16,1,.3,1),scale .38s cubic-bezier(.3,1.7,.5,1),background .3s,box-shadow .3s;
   background:radial-gradient(120% 140% at 30% 0%,rgba(255,255,255,.75) 0,rgba(255,255,255,.18) 55%),linear-gradient(180deg,rgba(166,92,124,.32),rgba(166,92,124,.15));
   border:1px solid rgba(255,255,255,.9);
   -webkit-backdrop-filter:blur(3px) saturate(220%) brightness(1.08) contrast(1.05);backdrop-filter:blur(3px) saturate(220%) brightness(1.08) contrast(1.05);
@@ -762,7 +762,7 @@ function syncSide(route){const r=String(route||'').split('/')[0];if(r==='quiz')r
   let moveFrame=0,latestX=0,targetX=0,currentX=0;
   const follow=x=>{latestX=x;const b=bar.getBoundingClientRect(),w=parseFloat(lens.style.getPropertyValue('--w'))||60;targetX=Math.max(3,Math.min(b.width-w-3,latestX-b.left-w/2));if(!moveFrame)moveFrame=requestAnimationFrame(smoothFollow)};
   const smoothFollow=()=>{moveFrame=0;if(!drag)return;const raw=parseFloat(lens.style.getPropertyValue('--x'));currentX=Number.isFinite(raw)?raw:targetX;const delta=targetX-currentX;currentX+=delta*.24;if(Math.abs(delta)<.35)currentX=targetX;lens.style.setProperty('--x',currentX+'px');if(Math.abs(targetX-currentX)>.35)moveFrame=requestAnimationFrame(smoothFollow)};
-  bar.addEventListener('pointerdown',e=>{if(!mobile()||(e.pointerType==='mouse'&&e.button!==0))return;drag=true;moved=false;pid=e.pointerId;startX=e.clientX;downTab=nearest(e.clientX);lens.classList.add('press','drag');place(downTab,true);try{bar.setPointerCapture(pid)}catch(_){}});
+  bar.addEventListener('pointerdown',e=>{if(!mobile()||(e.pointerType==='mouse'&&e.button!==0))return;drag=true;moved=false;pid=e.pointerId;startX=e.clientX;downTab=nearest(e.clientX);lens.classList.add('press','drag');/* Не телепортируем линзу на pointerdown: при обычном касании она должна плавно доехать до вкладки на pointerup. */try{bar.setPointerCapture(pid)}catch(_){}});
   bar.addEventListener('pointermove',e=>{if(!drag||e.pointerId!==pid)return;if(Math.abs(e.clientX-startX)>6)moved=true;if(moved)follow(e.clientX)});
   const end=(e,cancel)=>{if(!drag||e.pointerId!==pid)return;drag=false;if(moveFrame){cancelAnimationFrame(moveFrame);moveFrame=0}lens.classList.remove('press','drag');try{bar.releasePointerCapture(pid)}catch(_){}
     const t=cancel?active():nearest(e.clientX);place(t||active());if(!cancel&&t){const was=active();if(t!==was||!moved)setTimeout(()=>t.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true})),90)}};
