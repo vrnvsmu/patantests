@@ -305,6 +305,29 @@ main#app{margin:0 0 0 198px;max-width:none;padding:24px 28px 42px;min-height:cal
  .attempt-table-wrap .last-attempts-table{min-width:650px!important;width:650px!important}
 }
 
+/* Final fix: keep the Liquid Glass navigation centered and fixed on phone screens.
+   This must come after the desktop-site-on-phone overrides above. */
+@media (max-width:700px), (max-device-width:600px){
+ #sidebar.sidebar{
+  position:fixed!important;top:auto!important;left:12px!important;right:12px!important;
+  bottom:calc(10px + env(safe-area-inset-bottom))!important;
+  width:auto!important;max-width:none!important;height:66px!important;min-height:66px!important;
+  margin:0!important;padding:5px!important;box-sizing:border-box!important;
+  display:flex!important;flex-direction:row!important;align-items:stretch!important;
+  border:1px solid rgba(255,255,255,.7)!important;border-radius:34px!important;
+  background:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,.3) 55%,rgba(255,255,255,.45))!important;
+  -webkit-backdrop-filter:blur(16px) saturate(190%) brightness(1.04)!important;
+  backdrop-filter:blur(16px) saturate(190%) brightness(1.04)!important;
+  box-shadow:0 14px 34px rgba(48,34,66,.20),0 2px 6px rgba(48,34,66,.10),inset 0 1.5px 0 rgba(255,255,255,.95),inset 0 -1.5px 1px rgba(255,255,255,.45),inset 0 0 22px rgba(255,255,255,.35)!important;
+  z-index:1000!important;overflow:visible!important;transform:none!important;
+ }
+ #sidebar.sidebar .side-links{position:relative!important;display:flex!important;flex:1 1 auto!important;width:100%!important;height:100%!important;min-width:0!important;align-items:stretch!important;gap:2px!important;z-index:2!important;margin:0!important}
+ #sidebar.sidebar .side-link{position:relative!important;flex:1 1 0!important;min-width:0!important;width:auto!important;margin:0!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;padding:6px 1px!important;font-size:10px!important;line-height:1.1!important;white-space:nowrap!important;transform:none!important}
+ #sidebar.sidebar .side-lens{position:absolute!important;left:0!important;top:4px!important;bottom:4px!important;height:auto!important;z-index:1!important}
+ #sidebar.sidebar .side-quote,#sidebar.sidebar .side-bottom-art{display:none!important}
+ body{padding-bottom:0!important}
+ main#app{padding-bottom:112px!important}
+}
 </style></head><body>
 <header class="topbar"><div class="brand" onclick="home()"><span class="brand-mark">⚕</span><span>ТестПатан ВГМУ<small>Патологическая анатомия</small></span></div><div class="top-search"><span>⌕</span><div id="searchDrop" class="search-drop" hidden></div><input id="siteSearch" placeholder="Поиск по темам, разделам, терминам…" autocomplete="off" oninput="searchSuggest(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();searchSite(this.value)}else if(event.key==='Escape')searchClose()"></div><div class="top-actions"><div class="notif-wrap"><button class="icon-action bell" id="bellBtn" title="Уведомления" aria-label="Уведомления" onclick="toggleNotifs(event)"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 1 1 12 0c0 4.6 1.6 6.2 2 6.5H4c.4-.3 2-1.9 2-6.5z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg><span class="bell-badge" id="bellBadge" hidden></span></button><div id="notifPanel" class="notif-panel" hidden></div></div><nav id="nav"></nav></div></header>
 <aside class="sidebar" id="sidebar"><div class="side-links"><button class="side-link active" data-side="home" onclick="home()"><span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11 12 3.8l8.5 7.2"/><path d="M5.5 9.8V20h13V9.8"/><path d="M10 20v-5.5h4V20"/></svg></span>Главная</button><button class="side-link" onclick="sectionsPage()"><span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 9 4.5-9 4.5-9-4.5z"/><path d="m3 12 9 4.5 9-4.5"/><path d="m3 16.5 9 4.5 9-4.5"/></svg></span>Разделы</button><button class="side-link" onclick="profile()"><span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="14" width="4" height="6.5" rx="1.2"/><rect x="10" y="9" width="4" height="11.5" rx="1.2"/><rect x="16.5" y="4" width="4" height="16.5" rx="1.2"/></svg></span>Статистика</button><button class="side-link" onclick="favoritesPage()"><span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3.5h11V21L12 16.8 6.5 21z"/></svg></span>Избранное</button><button class="side-link" onclick="materialsPage()"><span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5C10 5 7 4.5 3.5 5v13.5c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5C17 4.5 14 5 12 6.5z"/><path d="M12 6.5V20"/></svg></span>Материалы</button></div><div class="side-quote">«Патологическая анатомия — это язык, на котором организм говорит с врачом.»</div><div class="side-bottom-art" aria-hidden="true"></div></aside>
