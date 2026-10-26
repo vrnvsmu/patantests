@@ -340,6 +340,11 @@ main#app{margin:0 0 0 198px;max-width:none;padding:24px 28px 42px;min-height:cal
  body{padding-bottom:0!important}
  main#app{padding-bottom:112px!important}
 }
+/* Liquid Glass navigation reliability: keep native tap/click handling intact. */
+@media (max-width:700px), (max-device-width:600px){
+ #sidebar.sidebar{touch-action:manipulation!important}
+ #sidebar.sidebar .side-link{touch-action:manipulation!important;-webkit-tap-highlight-color:transparent}
+}
 </style></head><body>
 <header class="topbar"><div class="brand" onclick="home()"><span class="brand-mark">⚕</span><span>ТестПатан ВГМУ<small>Патологическая анатомия</small></span></div><div class="top-search"><span>⌕</span><div id="searchDrop" class="search-drop" hidden></div><input id="siteSearch" placeholder="Поиск по темам, разделам, терминам…" autocomplete="off" oninput="searchSuggest(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();searchSite(this.value)}else if(event.key==='Escape')searchClose()"></div><div class="top-actions"><div class="notif-wrap"><button class="icon-action bell" id="bellBtn" title="Уведомления" aria-label="Уведомления" onclick="toggleNotifs(event)"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 1 1 12 0c0 4.6 1.6 6.2 2 6.5H4c.4-.3 2-1.9 2-6.5z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg><span class="bell-badge" id="bellBadge" hidden></span></button><div id="notifPanel" class="notif-panel" hidden></div></div><nav id="nav"></nav></div></header>
 <aside class="sidebar" id="sidebar"><div class="side-links"><button class="side-link active" data-side="home" onclick="home()"><span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11 12 3.8l8.5 7.2"/><path d="M5.5 9.8V20h13V9.8"/><path d="M10 20v-5.5h4V20"/></svg></span>Главная</button><button class="side-link" onclick="sectionsPage()"><span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 9 4.5-9 4.5-9-4.5z"/><path d="m3 12 9 4.5 9-4.5"/><path d="m3 16.5 9 4.5 9-4.5"/></svg></span>Разделы</button><button class="side-link" onclick="profile()"><span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="14" width="4" height="6.5" rx="1.2"/><rect x="10" y="9" width="4" height="11.5" rx="1.2"/><rect x="16.5" y="4" width="4" height="16.5" rx="1.2"/></svg></span>Статистика</button><button class="side-link" onclick="favoritesPage()"><span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3.5h11V21L12 16.8 6.5 21z"/></svg></span>Избранное</button><button class="side-link" onclick="materialsPage()"><span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5C10 5 7 4.5 3.5 5v13.5c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5C17 4.5 14 5 12 6.5z"/><path d="M12 6.5V20"/></svg></span>Материалы</button></div><div class="side-quote">«Патологическая анатомия — это язык, на котором организм говорит с врачом.»</div><div class="side-bottom-art" aria-hidden="true"></div></aside>
@@ -984,38 +989,52 @@ async function restoreQuestionFromTrash(trashId){
 async function purgeQuestionTrash(id){if(!isAdmin)return home();if(!confirm('Удалить вопрос из корзины навсегда? Восстановить его будет нельзя.'))return;await animateTrashRemoval([id]);const {error}=await sb.from('question_trash').delete().eq('id',id);if(error){await adminTrash(false);return toast('Не удалось удалить: '+error.message)}toast('Вопрос удалён навсегда');await adminTrash(false)}
 init();
 
-/* ===== Liquid glass tab bar: линза скользит за активной вкладкой и «подхватывается» пальцем ===== */
+/* ===== Liquid Glass tabs: reliable native taps + animated active lens ===== */
 const SIDE_TABS=['home','sections','profile','favorites','materials'];
-function syncSide(route){const r=String(route||'').split('/')[0];if(r==='quiz')return;
+function syncSide(route){
+  const r=String(route||'').split('/')[0];
+  if(r==='quiz')return;
   const map={home:'home',sections:'sections',mode:'sections',topic:'sections',tests:'sections',profile:'profile',favorites:'favorites',favorite:'favorites',materials:'materials'};
-  const k=map[r]||'';document.querySelectorAll('#sidebar .side-link').forEach(x=>x.classList.toggle('active',!!k&&x.dataset.side===k))}
+  const k=map[r]||'';
+  document.querySelectorAll('#sidebar .side-link').forEach(x=>x.classList.toggle('active',!!k&&x.dataset.side===k));
+}
 (function initGlassTabs(){
-  const bar=document.getElementById('sidebar');if(!bar)return;
-  const tabs=[...bar.querySelectorAll('.side-link')];tabs.forEach((t,i)=>{if(SIDE_TABS[i])t.dataset.side=SIDE_TABS[i]});
-  const lens=document.createElement('div');lens.className='side-lens';bar.prepend(lens);
-  const mobile=()=>matchMedia('(max-width:700px)').matches;
-  const place=(el,instant)=>{if(!el||!mobile())return;const b=bar.getBoundingClientRect(),r=el.getBoundingClientRect();
-    const x=r.left-b.left+3,w=r.width-6;if(instant){lens.style.transition='none'}
-    const moved=lens.style.getPropertyValue('--x')!==x+'px';
-    lens.style.setProperty('--w',w+'px');lens.style.setProperty('--x',x+'px');
+  const bar=document.getElementById('sidebar'); if(!bar)return;
+  const tabs=[...bar.querySelectorAll('.side-link')];
+  tabs.forEach((t,i)=>{if(SIDE_TABS[i])t.dataset.side=SIDE_TABS[i]});
+  let lens=bar.querySelector('.side-lens');
+  if(!lens){lens=document.createElement('div');lens.className='side-lens';bar.prepend(lens)}
+  const mobile=()=>matchMedia('(max-width:700px), (max-device-width:600px)').matches;
+  const place=(el,instant=false)=>{
+    if(!mobile())return;
+    el=el||tabs.find(t=>t.classList.contains('active'));
+    if(!el)return;
+    const b=bar.getBoundingClientRect(),r=el.getBoundingClientRect();
+    const x=Math.max(3,r.left-b.left+3),w=Math.max(24,r.width-6);
+    if(instant){lens.style.transition='none'}
+    lens.style.setProperty('--w',w+'px');
+    lens.style.setProperty('--x',x+'px');
     if(instant){void lens.offsetWidth;lens.style.transition=''}
-    else if(moved&&!drag){lens.classList.add('go');clearTimeout(place.t);place.t=setTimeout(()=>lens.classList.remove('go'),200)}};
-  const active=()=>tabs.find(t=>t.classList.contains('active'));
-  let drag=false,pid=null,startX=0,moved=false,downTab=null;
-  const nearest=x=>{let best=null,bd=1e9;tabs.forEach(t=>{const r=t.getBoundingClientRect(),d=Math.abs(x-(r.left+r.width/2));if(d<bd){bd=d;best=t}});return best};
-  let moveFrame=0,latestX=0,targetX=0,currentX=0;
-  const follow=x=>{latestX=x;const b=bar.getBoundingClientRect(),w=parseFloat(lens.style.getPropertyValue('--w'))||60;targetX=Math.max(3,Math.min(b.width-w-3,latestX-b.left-w/2));if(!moveFrame)moveFrame=requestAnimationFrame(smoothFollow)};
-  const smoothFollow=()=>{moveFrame=0;if(!drag)return;const raw=parseFloat(lens.style.getPropertyValue('--x'));currentX=Number.isFinite(raw)?raw:targetX;const delta=targetX-currentX;currentX+=delta*.24;if(Math.abs(delta)<.35)currentX=targetX;lens.style.setProperty('--x',currentX+'px');if(Math.abs(targetX-currentX)>.35)moveFrame=requestAnimationFrame(smoothFollow)};
-  bar.addEventListener('pointerdown',e=>{if(!mobile()||(e.pointerType==='mouse'&&e.button!==0))return;drag=true;moved=false;pid=e.pointerId;startX=e.clientX;downTab=nearest(e.clientX);lens.classList.add('press','drag');/* Не телепортируем линзу на pointerdown: при обычном касании она должна плавно доехать до вкладки на pointerup. */try{bar.setPointerCapture(pid)}catch(_){}});
-  bar.addEventListener('pointermove',e=>{if(!drag||e.pointerId!==pid)return;if(Math.abs(e.clientX-startX)>6)moved=true;if(moved)follow(e.clientX)});
-  const end=(e,cancel)=>{if(!drag||e.pointerId!==pid)return;drag=false;if(moveFrame){cancelAnimationFrame(moveFrame);moveFrame=0}lens.classList.remove('press','drag');try{bar.releasePointerCapture(pid)}catch(_){}
-    const t=cancel?active():nearest(e.clientX);place(t||active());if(!cancel&&t){const was=active();if(t!==was||!moved)setTimeout(()=>t.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true})),90)}};
-  bar.addEventListener('pointerup',e=>end(e,false));bar.addEventListener('pointercancel',e=>end(e,true));
-  // родные клики мыши/пальца гасим — вместо них сработает наш (после анимации); клавиатура (detail=0) работает как обычно
-  bar.addEventListener('click',e=>{if(mobile()&&e.detail>0&&e.isTrusted){e.stopPropagation();e.preventDefault()}},true);
-  new MutationObserver(()=>{if(!drag)place(active())}).observe(bar,{attributes:true,subtree:true,attributeFilter:['class']});
-  addEventListener('resize',()=>place(active(),true));addEventListener('orientationchange',()=>setTimeout(()=>place(active(),true),200));
-  place(active(),true);setTimeout(()=>place(active(),true),300);if(document.fonts?.ready)document.fonts.ready.then(()=>place(active(),true));
+    else {lens.classList.add('go');clearTimeout(place.timer);place.timer=setTimeout(()=>lens.classList.remove('go'),220)}
+  };
+  // Do not capture pointers or cancel native clicks: that caused intermittent taps
+  // to navigate while leaving the liquid-glass indicator behind.
+  bar.addEventListener('click',e=>{
+    const tab=e.target.closest('.side-link');
+    if(!tab)return;
+    requestAnimationFrame(()=>place(tab));
+    setTimeout(()=>place(tabs.find(t=>t.classList.contains('active'))||tab),40);
+  });
+  new MutationObserver(()=>{
+    const active=tabs.find(t=>t.classList.contains('active'));
+    if(active&&!bar.dataset.glassDrag)requestAnimationFrame(()=>place(active));
+  }).observe(bar,{attributes:true,subtree:true,attributeFilter:['class']});
+  const reposition=()=>place(tabs.find(t=>t.classList.contains('active')),true);
+  addEventListener('resize',reposition);
+  addEventListener('orientationchange',()=>setTimeout(reposition,200));
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(reposition,80)});
+  reposition();setTimeout(reposition,250);
+  if(document.fonts?.ready)document.fonts.ready.then(reposition);
 })();
 
 /* ===== Уведомления: колокольчик в шапке + рассылка из админки ===== */
