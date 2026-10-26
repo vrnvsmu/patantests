@@ -300,7 +300,7 @@ function savedAttemptKey(id='current'){return 'testpatan_attempt_'+(me?.id||'gue
 function saveCurrentAttempt(){if(!Q||!me||!Q.id||Q.mode==='favorites')return;try{localStorage.setItem(savedAttemptKey(Q.id),JSON.stringify({id:Q.id,qs:Q.qs,tasks:Q.tasks,i:Q.i,mode:Q.mode,t0:Q.t0,answers:Q.answers||{},order:Q.order||{},showAllNumbers:!!Q.showAllNumbers,marathon:!!Q.marathon,isMarathon:!!Q.isMarathon,savedAt:Date.now()}))}catch(e){console.warn('attempt autosave',e)}}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')saveCurrentAttempt()});
 window.addEventListener('pagehide',()=>saveCurrentAttempt());
-function resumeAttempt(id){try{const raw=localStorage.getItem(savedAttemptKey(id));if(!raw){toast('Состояние этой попытки не сохранено на этом устройстве. Пока нельзя восстановить точный порядок вопросов.');return home()}const state=JSON.parse(raw);if(String(state.id)!==String(id)){toast('Сохранённое состояние теста недоступно на этом устройстве.');return home()}Q={...state,tasks:state.tasks||groupTasks(state.qs)};markRoute('quiz');showQ()}catch(e){toast('Не удалось восстановить тест');home()}}
+async function resumeAttempt(id){try{const raw=localStorage.getItem(savedAttemptKey(id));if(!raw){toast('Состояние этой попытки не сохранено на этом устройстве. Точный порядок вопросов восстановить нельзя.');return home()}const state=JSON.parse(raw);if(String(state.id)!==String(id)){toast('Сохранённое состояние теста недоступно на этом устройстве.');return home()}if(state.marathon||state.isMarathon){const {error}=await sb.rpc('resume_my_attempt',{p_attempt:id});if(error)throw error}Q={...state,tasks:state.tasks||groupTasks(state.qs)};markRoute('quiz');showQ()}catch(e){console.warn('resume attempt',e);toast('Не удалось возобновить попытку: '+(e?.message||'ошибка'));home()}}
 async function loadLatestResults(){
  const box=$('#home-latest-results');if(!box)return;
  if(!me){box.innerHTML='<div class="favorite-empty compact-empty">Войдите, чтобы видеть свои последние попытки.</div>';return}
@@ -308,17 +308,37 @@ async function loadLatestResults(){
   box.innerHTML='<div class="favorite-empty compact-empty">Обновляем историю попыток…</div>';
   const {data,error}=await sb.from('attempts').select('id,mode,topic_id,question_count,correct_count,percent,created_at,status').eq('user_id',me.id).order('created_at',{ascending:false}).limit(1000);
   if(error)throw error;
-  const all=(data||[]).map(a=>{let saved=null;try{saved=JSON.parse(localStorage.getItem(savedAttemptKey(a.id))||'null')}catch(e){};const unfinished=!['finished','completed','done'].includes(String(a.status||'').toLowerCase());const isMarathon=!!saved?.marathon||!!saved?.isMarathon||String(a.mode||'').toLowerCase()==='marathon'||(!a.topic_id&&Number(a.question_count||0)>100);return {...a,_saved:saved,_unfinished:unfinished,_marathon:isMarathon,_activity:Number(saved?.savedAt)||new Date(a.created_at||0).getTime()}});
+  const all=(data||[]).map(a=>{let saved=null;try{saved=JSON.parse(localStorage.getItem(savedAttemptKey(a.id))||'null')}catch(e){};const status=String(a.status||'').toLowerCase();const unfinished=!['finished','completed','done'].includes(status);const isMarathon=!!saved?.marathon||!!saved?.isMarathon||String(a.mode||'').toLowerCase()==='marathon'||(!a.topic_id&&Number(a.question_count||0)>100);return {...a,_saved:saved,_unfinished:unfinished,_marathon:isMarathon,_activity:Number(saved?.savedAt)||new Date(a.created_at||0).getTime()}});
   all.sort((a,b)=>b._activity-a._activity);
-  // Show the ten most recently active attempts, plus every unfinished marathon
-  // that still has a resumable local state, even if it is older than those ten.
-  const recent=all.slice(0,10),included=new Set(recent.map(a=>String(a.id)));
-  all.forEach(a=>{if(a._marathon&&a._unfinished&&a._saved&&String(a._saved.id)===String(a.id)&&!included.has(String(a.id))){recent.push(a);included.add(String(a.id))}});
+  const firstTen=all.slice(0,10),candidateIds=[...new Set([...firstTen.map(a=>a.id),...all.filter(a=>a._marathon).map(a=>a.id)])];
+  let answerStats={};
+  if(candidateIds.length){const ar=await sb.rpc('get_my_attempt_stats',{p_attempt_ids:candidateIds});if(ar.error)throw ar.error;for(const x of (ar.data||[]))answerStats[x.attempt_id]={answered:Number(x.answered_count||0),correct:Number(x.correct_count||0)}}
+  // Keep the ten most recently active attempts, plus every marathon with unanswered questions.
+  const recent=firstTen.slice(),included=new Set(recent.map(a=>String(a.id)));
+  all.forEach(a=>{
+   const st=answerStats[a.id]||{answered:0,correct:0};
+   const hasLocal=!!a._saved&&String(a._saved.id)===String(a.id);
+   const marathonStillOpen=a._marathon&&Number(st.answered)<Number(a.question_count||0);
+   if(marathonStillOpen&&!included.has(String(a.id))){recent.push(a);included.add(String(a.id))}
+  });
   recent.sort((a,b)=>b._activity-a._activity);
-  const ids=recent.map(x=>x.id);let answerStats={};
-  if(ids.length){const ar=await sb.rpc('get_my_attempt_stats',{p_attempt_ids:ids});if(ar.error)throw ar.error;for(const x of (ar.data||[]))answerStats[x.attempt_id]={answered:Number(x.answered_count||0),correct:Number(x.correct_count||0)}}
   if(!recent.length){box.innerHTML='<div class="favorite-empty compact-empty">Пока нет попыток. Начните тест — он появится здесь.</div>';return}
-  box.innerHTML=recent.map(a=>{const saved=a._saved,unfinished=a._unfinished,topic=topics.find(t=>String(t.id)===String(a.topic_id)),isMarathon=a._marathon;const localStats={answered:0,correct:0};Object.values(saved?.answers||{}).forEach(ans=>{if(ans&&ans.chosen){localStats.answered++;if(ans.correct===true)localStats.correct++}});const dbStats=answerStats[a.id]||{answered:0,correct:0};const st=localStats.answered>dbStats.answered?localStats:dbStats;const shownCorrect=st.answered?st.correct:Number(a.correct_count||0),pct=Number(a.question_count)?100*shownCorrect/Number(a.question_count):0;const mode=MODES[a.mode]?.[1]||a.mode||'Тест',date=a.created_at?new Date(a.created_at).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'',canResume=unfinished&&((saved&&String(saved.id)===String(a.id))||isMarathon);return `<div class="result-row ${unfinished?'result-row-pending':''}"><span class="result-icon">${a.mode==='macro'?'▧':a.mode==='micro'?'▦':a.mode==='theory'?'▤':'▣'}</span><div class="result-main"><b>${isMarathon?'Марафон · '+esc(mode):(esc(mode)+(topic?' · '+esc(topic.title):' · Все темы'))}</b><div class="result-bar"><span style="width:${Math.max(0,Math.min(100,pct))}%"></span></div><small>${unfinished?'Не завершён · ':''}${shownCorrect} правильных · отвечено ${st.answered} из ${Number(a.question_count||0)}${unfinished?'':' ('+Math.round(pct)+'%)'}</small>${canResume?`<button class="text-link resume-attempt-btn" onclick="resumeAttempt('${esc(a.id)}')">Продолжить с последнего задания →</button>`:unfinished?'<small class="resume-note">Незавершённая попытка</small>':''}</div>${unfinished?'<span class="result-percent pending">…</span>':`<span class="result-percent">${Math.round(pct)}%</span>`}<time>${date}</time></div>`}).join('');
+  box.innerHTML=recent.map(a=>{
+   const saved=a._saved,stats=answerStats[a.id]||{answered:0,correct:0},isMarathon=a._marathon;
+   const hasLocal=!!saved&&String(saved.id)===String(a.id);
+   const incompleteMarathon=isMarathon&&stats.answered<Number(a.question_count||0);
+   const displayUnfinished=a._unfinished||incompleteMarathon;
+   const localStats={answered:0,correct:0};
+   Object.values(saved?.answers||{}).forEach(ans=>{if(ans&&ans.chosen){localStats.answered++;if(ans.correct===true)localStats.correct++}});
+   const st=localStats.answered>stats.answered?localStats:stats;
+   const shownCorrect=st.answered?st.correct:Number(a.correct_count||0),pct=Number(a.question_count)?100*shownCorrect/Number(a.question_count):0;
+   const topic=topics.find(t=>String(t.id)===String(a.topic_id));
+   const mode=MODES[a.mode]?.[1]||a.mode||'Тест',date=a.created_at?new Date(a.created_at).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'';
+   const canResume=hasLocal&&(displayUnfinished||incompleteMarathon);
+   const resumeLabel=isMarathon?'Продолжить марафон →':'Продолжить с последнего задания →';
+   const note=isMarathon&&!hasLocal&&incompleteMarathon?'<small class="resume-note">Нет сохранённого порядка вопросов на этом устройстве</small>':displayUnfinished&&!canResume?'<small class="resume-note">Состояние попытки не сохранено</small>':'';
+   return `<div class="result-row ${displayUnfinished?'result-row-pending':''}"><span class="result-icon">${a.mode==='macro'?'▧':a.mode==='micro'?'▦':a.mode==='theory'?'▤':'▣'}</span><div class="result-main"><b>${isMarathon?'Марафон · '+esc(mode):(esc(mode)+(topic?' · '+esc(topic.title):' · Все темы'))}</b><div class="result-bar"><span style="width:${Math.max(0,Math.min(100,pct))}%"></span></div><small>${displayUnfinished?'Не завершён · ':''}${shownCorrect} правильных · отвечено ${st.answered} из ${Number(a.question_count||0)}${displayUnfinished?'':' ('+Math.round(pct)+'%)'}</small>${canResume?`<button class="text-link resume-attempt-btn" onclick="resumeAttempt('${esc(a.id)}')">${resumeLabel}</button>`:note}</div>${displayUnfinished?'<span class="result-percent pending">…</span>':`<span class="result-percent">${Math.round(pct)}%</span>`}<time>${date}</time></div>`
+  }).join('');
  }catch(e){box.innerHTML='<div class="favorite-empty compact-empty">Не удалось загрузить попытки. Попробуйте обновить страницу.</div>';console.warn('latest results',e)}
 }
 const normQ=v=>String(v||'').toLowerCase().replace(/ё/g,'е').trim();
@@ -433,7 +453,17 @@ function nextQ(){Q.i++;Q.i<Q.tasks.length?showQ():finish()}
 async function finish(){
   const {data,error}=await sb.rpc('finish_attempt',{p_attempt:Q.id});
   if(error){fail(app,error);return}
-  try{localStorage.removeItem(savedAttemptKey(Q.id))}catch(e){}
+  const isMarathonAttempt=!!(Q.marathon||Q.mode==='marathon'||Q.isMarathon);
+  const answeredCount=Number(data.answered_count??Object.values(Q.answers||{}).filter(x=>x&&x.chosen).length);
+  const totalCount=Number(data.question_count||Q.qs?.length||0);
+  if(isMarathonAttempt&&answeredCount<totalCount){
+    // Preserve local order and point to the first unanswered task.
+    const nextIndex=(Q.tasks||[]).findIndex(task=>!task.every(q=>Q.answers?.[q.id]?.chosen));
+    if(nextIndex>=0)Q.i=nextIndex;
+    saveCurrentAttempt();
+  }else{
+    try{localStorage.removeItem(savedAttemptKey(Q.id))}catch(e){}
+  }
   const rv=(await sb.rpc('get_attempt_review',{p_attempt:Q.id})).data||[];
   if(Q.marathon||Q.mode==='marathon'||Q.isMarathon){const ids=[...new Set(rv.map(r=>r.question_id))];const qr=ids.length?await sb.from('questions').select('id,topic_id').in('id',ids):{data:[]};const topicByQuestion=Object.fromEntries((qr.data||[]).map(x=>[x.id,x.topic_id]));rv.forEach(r=>{const q=Q.qs.find(x=>x.id===r.question_id);if(q)q.topic_id=topicByQuestion[r.question_id]||null;});}
   const txt=(q,id)=>(q.options.find(o=>o.id===id)||{}).text||'— нет ответа —';
