@@ -298,15 +298,17 @@ async function openFavorite(id,mark=true){if(mark)markRoute('favorite/'+id);cons
 async function loadHomeFavorites(){const box=$('#home-favorites-list');if(!box)return;if(!me){box.innerHTML='<div class="favorite-empty compact-empty">Войдите, чтобы просматривать сохранённые вопросы.</div>';return}try{const {data,error}=await sb.from('question_favorites').select('question_id,questions(id,prompt,section,image_path,topic_id)').eq('user_id',me.id).order('created_at',{ascending:false}).limit(4);if(error)throw error;const rows=(data||[]).filter(x=>x.questions);if(!rows.length){box.innerHTML='<div class="favorite-empty compact-empty">Пока нет избранных вопросов. Добавляйте их во время прохождения тестов.</div>';return}box.innerHTML=rows.map(x=>{const q=x.questions;return `<button class="home-favorite-card" onclick="openFavorite('${q.id}')">${q.image_path?`<img src="${esc(pub(q.image_path))}" alt="">`:'<span class="home-fav-placeholder">✧</span>'}<b>${esc(q.prompt)}</b><small>${esc(MODES[q.section]?.[1]||q.section)}</small><span class="home-fav-arrow">→</span></button>`}).join('')}catch(e){box.innerHTML='<div class="favorite-empty compact-empty">Избранное пока недоступно.</div>';console.warn('home favorites',e)}}
 function savedAttemptKey(id='current'){return 'testpatan_attempt_'+(me?.id||'guest')+'_'+id}
 function saveCurrentAttempt(){if(!Q||!me||!Q.id||Q.mode==='favorites')return;try{localStorage.setItem(savedAttemptKey(Q.id),JSON.stringify({id:Q.id,qs:Q.qs,tasks:Q.tasks,i:Q.i,mode:Q.mode,t0:Q.t0,answers:Q.answers||{},order:Q.order||{},showAllNumbers:!!Q.showAllNumbers,marathon:!!Q.marathon,isMarathon:!!Q.isMarathon,savedAt:Date.now()}))}catch(e){console.warn('attempt autosave',e)}}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')saveCurrentAttempt()});
+window.addEventListener('pagehide',()=>saveCurrentAttempt());
 function resumeAttempt(id){try{const raw=localStorage.getItem(savedAttemptKey(id));if(!raw){toast('Не найдено сохранённое состояние этого теста на этом устройстве.');return home()}const state=JSON.parse(raw);if(String(state.id)!==String(id)){toast('Сохранённое состояние теста недоступно на этом устройстве.');return home()}Q={...state,tasks:state.tasks||groupTasks(state.qs)};markRoute('quiz');showQ()}catch(e){toast('Не удалось восстановить тест');home()}}
 async function loadLatestResults(){
  const box=$('#home-latest-results');if(!box)return;
  if(!me){box.innerHTML='<div class="favorite-empty compact-empty">Войдите, чтобы видеть свои последние попытки.</div>';return}
  try{
   box.innerHTML='<div class="favorite-empty compact-empty">Обновляем историю попыток…</div>';
-  const {data,error}=await sb.from('attempts').select('id,mode,topic_id,question_count,correct_count,percent,created_at,status').eq('user_id',me.id).order('created_at',{ascending:false}).limit(200);
+  const {data,error}=await sb.from('attempts').select('id,mode,topic_id,question_count,correct_count,percent,created_at,status').eq('user_id',me.id).order('created_at',{ascending:false}).limit(1000);
   if(error)throw error;
-  const all=(data||[]).map(a=>{let saved=null;try{saved=JSON.parse(localStorage.getItem(savedAttemptKey(a.id))||'null')}catch(e){};const unfinished=!['finished','completed','done'].includes(String(a.status||'').toLowerCase());const isMarathon=!!saved?.marathon||!!saved?.isMarathon||(!a.topic_id&&Number(a.question_count||0)>100);return {...a,_saved:saved,_unfinished:unfinished,_marathon:isMarathon,_activity:Number(saved?.savedAt)||new Date(a.created_at||0).getTime()}});
+  const all=(data||[]).map(a=>{let saved=null;try{saved=JSON.parse(localStorage.getItem(savedAttemptKey(a.id))||'null')}catch(e){};const unfinished=!['finished','completed','done'].includes(String(a.status||'').toLowerCase());const isMarathon=!!saved?.marathon||!!saved?.isMarathon||String(a.mode||'').toLowerCase()==='marathon'||(!a.topic_id&&Number(a.question_count||0)>100);return {...a,_saved:saved,_unfinished:unfinished,_marathon:isMarathon,_activity:Number(saved?.savedAt)||new Date(a.created_at||0).getTime()}});
   all.sort((a,b)=>b._activity-a._activity);
   // Show the ten most recently active attempts, plus every unfinished marathon
   // that still has a resumable local state, even if it is older than those ten.
@@ -685,16 +687,21 @@ async function loadHomeProgress(){
  const captions=['home-progress-caption','rail-progress-caption'].map(id=>$('#'+id)).filter(Boolean);
  if(!me){captions.forEach(cap=>cap.textContent='Войди, чтобы увидеть результаты');return}
  try{
-  // Fetch the user's attempts first; keep this query independent from the answer query.
-  const {data,error}=await sb.from('attempts').select('id,mode,question_count,status').eq('user_id',me.id).order('created_at',{ascending:false}).limit(500);
-  if(error)throw error;
-  const attempts=data||[], ids=attempts.map(x=>x.id).filter(Boolean), statsByAttempt={};
-  // Small batches avoid oversized PostgREST URLs when a user has many attempts.
-  for(let i=0;i<ids.length;i+=75){
-   const batch=ids.slice(i,i+75);
-   const ar=await sb.from('attempt_answers').select('attempt_id,chosen_option_id,is_correct').in('attempt_id',batch);
-   if(ar.error)throw ar.error;
-   (ar.data||[]).forEach(x=>{const z=statsByAttempt[x.attempt_id]||(statsByAttempt[x.attempt_id]={answered:0,correct:0});if(x.chosen_option_id){z.answered++;if(x.is_correct===true)z.correct++}});
+  const {data:attemptsData,error:attemptsError}=await sb.from('attempts').select('id,mode,question_count,status,created_at').eq('user_id',me.id).order('created_at',{ascending:false}).limit(1000);
+  if(attemptsError)throw attemptsError;
+  const attempts=attemptsData||[], ids=attempts.map(x=>x.id).filter(Boolean), statsByAttempt={};
+  // Fetch in small ID batches and paginate rows to avoid PostgREST response caps.
+  for(let i=0;i<ids.length;i+=50){
+   const batch=ids.slice(i,i+50);
+   let from=0, pageSize=500;
+   while(true){
+    const {data:answerRows,error:answerError}=await sb.from('attempt_answers').select('attempt_id,chosen_option_id,is_correct').in('attempt_id',batch).range(from,from+pageSize-1);
+    if(answerError)throw answerError;
+    const rows=answerRows||[];
+    rows.forEach(x=>{const z=statsByAttempt[x.attempt_id]||(statsByAttempt[x.attempt_id]={answered:0,correct:0});if(x.chosen_option_id){z.answered++;if(x.is_correct===true)z.correct++}});
+    if(rows.length<pageSize)break;
+    from+=pageSize;
+   }
   }
   const sum=Object.values(statsByAttempt).reduce((n,x)=>n+x.correct,0),total=Object.values(statsByAttempt).reduce((n,x)=>n+x.answered,0),pct=total?Math.round(sum/total*100):0;
   for(const id of ['home-donut','rail-donut']){const donut=$('#'+id);if(donut){donut.style.background=pct<=0?'conic-gradient(#e7dfe8 0deg 360deg)':pct>=100?'conic-gradient(#9a638b 0deg 360deg)':`conic-gradient(#9a638b 0 ${pct}%,#e7dfe8 ${pct}% 100%)`;const label=donut.querySelector('span');if(label)label.textContent=pct+'%'}}
@@ -702,7 +709,8 @@ async function loadHomeProgress(){
   for(const id of ['home-mode-stats','rail-mode-stats']){const el=$('#'+id);if(el)el.innerHTML=['macro','micro','theory','exam'].map(m=>{const rows=attempts.filter(x=>x.mode===m),c=rows.reduce((n,x)=>n+Number(statsByAttempt[x.id]?.correct||0),0),t=rows.reduce((n,x)=>n+Number(statsByAttempt[x.id]?.answered||0),0);return `<div><i class="dot dot-${m}"></i>${MODES[m][1]} <span>${c}/${t}</span></div>`}).join('')}
  }catch(e){
   console.error('Не удалось загрузить прогресс:',e);
-  captions.forEach(cap=>cap.textContent='Не удалось загрузить результаты. Обновите страницу.');
+  const detail=e?.message?` (${e.message})`:'';
+  captions.forEach(cap=>cap.textContent='Не удалось загрузить результаты'+detail);
  }
 }
 async function loadHomeContent(){try{const {data}=await sb.from('site_content').select('key,value');if(!data)return;const c=Object.fromEntries(data.map(x=>[x.key,x.value]));const hero=$('.hero-histology');if(hero&&c.hero_image)hero.style.setProperty('--hero',`url("${String(c.hero_image).replace(/"/g,'%22')}")`);const script=$('.hero-script');if(script&&c.left_quote)script.innerHTML=esc(c.left_quote).replace(/\n/g,'<br>');const quote=$('.quote-card blockquote');if(quote&&c.right_quote)quote.textContent=c.right_quote;const side=$('.side-quote');if(side&&c.left_quote)side.textContent=c.left_quote;}catch(e){console.warn('home content',e)}}
