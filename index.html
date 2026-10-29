@@ -355,12 +355,14 @@ main#app{margin:0 0 0 198px;max-width:none;padding:24px 28px 42px;min-height:cal
 
 /* Mobile overlay fix: keep search suggestions and notifications above page cards/artwork. */
 @media (max-width:700px), (max-device-width:600px){
-  .topbar{position:relative!important;z-index:1000!important;isolation:isolate;overflow:visible!important}
+  .topbar{position:relative!important;z-index:2000!important;isolation:isolate;overflow:visible!important}
   .top-search{position:relative!important;z-index:1002!important;overflow:visible!important}
   .search-drop{position:absolute!important;z-index:1005!important;max-height:calc(100dvh - 150px);overscroll-behavior:contain}
-  .top-actions{position:relative!important;z-index:1001!important;overflow:visible!important}
-  .notif-wrap{position:static!important;z-index:1002!important}
-  .notif-panel{position:fixed!important;z-index:1010!important;left:12px!important;right:12px!important;top:calc(env(safe-area-inset-top) + 64px)!important;width:auto!important;max-width:none!important;max-height:calc(100dvh - 90px);overflow:auto}
+  .top-actions{position:relative!important;z-index:1001!important;overflow:visible!important;display:flex!important;align-items:center!important}
+  .notif-wrap{position:relative!important;display:flex!important;align-items:center!important;flex:0 0 auto!important;z-index:1100!important}
+  /* Keep the bell in the first header row beside the account buttons, not absolutely positioned over the header. */
+  .icon-action.bell{position:relative!important;top:auto!important;right:auto!important;z-index:1101!important;display:grid!important;flex:0 0 38px!important;margin:0!important;align-self:center!important}
+  .notif-panel{position:fixed!important;z-index:3000!important;left:12px!important;right:12px!important;top:calc(env(safe-area-inset-top) + 58px)!important;width:auto!important;max-width:none!important;max-height:calc(100dvh - 78px);overflow:auto}
 }
 
 </style></head><body>
