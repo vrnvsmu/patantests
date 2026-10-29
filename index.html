@@ -1170,3 +1170,14 @@ document.addEventListener('click',e=>{if(!e.target.closest('.top-search'))search
 loadNotifs();
 </script></body></html>
 
+
+<style id="favorite-star-text-spacing-fix">
+/* Keep the favorite toggle from covering long question text on desktop and mobile. */
+.favorite-card { box-sizing: border-box; }
+.favorite-card > h3 { padding-right: 42px; overflow-wrap: anywhere; }
+.favorite-card > .unfav { z-index: 2; flex-shrink: 0; }
+@media (max-width: 700px) {
+  .favorite-card > h3 { padding-right: 44px; }
+  .favorite-card > .unfav { right: 12px; top: 12px; }
+}
+</style>
