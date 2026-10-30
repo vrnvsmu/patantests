@@ -1,4 +1,8 @@
 {
   "rewrites": [
-    { "source": "/(.*)", "destination": "https://shdgexpozmbivpnykvmt.supabase.co/rest/v1/" }
+    {
+      "source": "/(.*)",
+      "destination": "https://shdgexpozmbivpnykvmt.supabase.co/rest/v1/"
+    }
+  ]
 }
