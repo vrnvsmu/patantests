@@ -424,10 +424,26 @@ const msg=e=>{const m=e?.message||String(e);return /rate|too many/i.test(m)?'С�
 const fail=(el,e)=>{el.innerHTML=`<div class="err">${esc(msg(e))}</div>`};
 
 async function init(){
-  const {data:{session}}=await sb.auth.getSession();
-  if(session) await loadMe();
-  const t=await sb.from('topics').select('*').order('sort_order'); topics=t.data||[];
-  nav(); await restoreRoute(location.hash.replace(/^#\/?/,''));
+  nav();
+  try {
+    const {data:{session},error:sessionError}=await sb.auth.getSession();
+    if(sessionError) console.warn('Supabase Auth unavailable:',sessionError);
+    if(session) {
+      try { await loadMe(); } catch(e) { console.warn('Profile/Auth request failed:',e); me=null; isAdmin=false; }
+    }
+    const t=await sb.from('topics').select('*').order('sort_order');
+    if(t.error) {
+      console.error('Topics request failed:',t.error);
+      topics=[];
+      app.innerHTML=`<section class="panel"><h2>Не удалось загрузить темы</h2><p>Сайт открылся, но не получил данные от базы данных. Это не означает, что в темах 0 вопросов.</p><p class="muted">Проверьте подключение к Supabase и попробуйте ещё раз. Если с VPN работает, а без VPN нет — вероятна проблема сетевого доступа к серверу.</p><button onclick="location.reload()">Повторить загрузку</button></section>`;
+      return;
+    }
+    topics=t.data||[];
+    nav(); await restoreRoute(location.hash.replace(/^#\/?/,''));
+  } catch(e) {
+    console.error('Site initialization failed:',e);
+    app.innerHTML=`<section class="panel"><h2>Не удалось подключиться к сервису</h2><p>Не удалось получить данные или проверить вход. Попробуйте обновить страницу.</p><p class="muted">Если проблема возникает только без VPN, вероятна недоступность одного из внешних сервисов из вашей сети.</p><button onclick="location.reload()">Повторить загрузку</button></section>`;
+  }
 }
 async function loadMe(){
   const {data:{user}}=await sb.auth.getUser(); if(!user){me=null;return}
