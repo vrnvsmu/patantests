@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "https://shdgexpozmbivpnykvmt.supabase.co/rest/v1/"
+    }
+  ]
+}
