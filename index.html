@@ -399,28 +399,35 @@ main#app{margin:0 0 0 198px;max-width:none;padding:24px 28px 42px;min-height:cal
  .today-widget .rail-action small{font-size:12px!important}
 }
 
-/* Context-meter inspired progress for the four main learning modes */
-.home-mode-meter-widget{margin:14px 0 16px;padding:17px 19px 15px;background:linear-gradient(115deg,#fffdfa,#fbf8fc);border:1px solid #e9e0e6;border-radius:14px;box-shadow:0 5px 20px #46364b08}
-.home-mode-meter-widget .widget-head{align-items:flex-start;margin-bottom:14px}
-.home-mode-meter-widget .widget-head h3{margin:0;font-size:18px}
-.home-mode-meter-subtitle{margin:4px 0 0;color:#7b7c8b;font-size:12px;line-height:1.4}
-.home-mode-meter{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;height:17px;margin:4px 0 12px}
-.home-mode-meter-segment{position:relative;display:block;min-width:0;padding:0!important;height:17px!important;border:0!important;border-radius:5px!important;overflow:hidden;background:#ece8ef!important;box-shadow:none!important;transform:none!important}
-.home-mode-meter-segment:focus-visible{outline:2px solid #8e78c5;outline-offset:2px}
-.home-mode-meter-fill{display:block;height:100%;width:0;background:var(--mode-color);border-radius:5px;transition:width .7s cubic-bezier(.2,.7,.2,1);box-shadow:inset 0 0 0 1px #ffffff38}
-.home-mode-meter-segment:hover{filter:brightness(.97)}
-.home-mode-meter-labels{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
-.home-mode-meter-label{display:flex;align-items:center;gap:7px;min-width:0;padding:0!important;text-align:left;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;color:#303247!important;font-size:12px;font-weight:500;transform:none!important}
-.home-mode-meter-label:hover{color:#81546b!important}
-.home-mode-meter-label b{margin-left:auto;color:#7c7b8c;font-size:12px;font-weight:700;white-space:nowrap}
-.home-mode-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.home-mode-dot{width:8px;height:8px;flex:0 0 8px;border-radius:50%;background:var(--mode-color)}
-.home-mode-meter-segment[data-mode="macro"],.home-mode-dot.dot-macro{--mode-color:#b87898}
-.home-mode-meter-segment[data-mode="micro"],.home-mode-dot.dot-micro{--mode-color:#8c73bd}
-.home-mode-meter-segment[data-mode="theory"],.home-mode-dot.dot-theory{--mode-color:#5c9bd8}
-.home-mode-meter-segment[data-mode="exam"],.home-mode-dot.dot-exam{--mode-color:#6aaa95}
-@media(max-width:600px){.home-mode-meter-widget{padding:14px 12px}.home-mode-meter-widget .widget-head h3{font-size:16px}.home-mode-meter-labels{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:12px}.home-mode-meter{gap:4px;height:14px}.home-mode-meter-segment{height:14px!important}.home-mode-meter-label{font-size:11px}}
-@media(prefers-reduced-motion:reduce){.home-mode-meter-fill{transition:none}}
+/* ContextMeter-inspired segmented bar in the existing progress card */
+.context-meter-card{padding:20px 19px 17px;overflow:hidden}
+.context-meter-card .widget-head{align-items:flex-start;margin-bottom:12px}
+.context-meter-card .widget-head h3{margin:0}
+.ctx-subtitle{margin:4px 0 0;color:#7b7c8b;font-size:12px;line-height:1.4}
+.ctx-figure{display:flex;align-items:baseline;gap:8px;margin:6px 0 13px;min-height:44px}
+.ctx-figure strong{font-size:clamp(28px,3vw,38px);line-height:1;font-weight:750;letter-spacing:-1.3px;color:#29263a;transition:opacity .18s ease}
+.ctx-figure span{font-size:12px;color:#858092}
+.ctx-bar{display:flex;gap:2px;height:20px;margin:0 0 14px;overflow:hidden;border-radius:6px;isolation:isolate}
+.ctx-seg{position:relative!important;display:block!important;flex:1 1 0;min-width:3px;height:20px!important;padding:0!important;border:0!important;border-radius:2px!important;box-shadow:none!important;transform:none!important;transition:flex-grow .55s cubic-bezier(.2,.7,.2,1),opacity .22s ease,filter .22s ease!important;background:var(--ctx-colour)!important;opacity:1}
+.ctx-seg:first-child{border-radius:6px 2px 2px 6px!important}.ctx-seg:last-child{border-radius:2px 6px 6px 2px!important}
+.ctx-seg[data-dim="true"]{opacity:.25;filter:saturate(.55)}
+.ctx-seg:hover{filter:brightness(1.03)!important;cursor:default}
+.ctx-seg:focus-visible{outline:2px solid #6c59b7;outline-offset:3px}
+.ctx-seg[data-mode="macro"],.ctx-swatch.dot-macro{--ctx-colour:#b87898}
+.ctx-seg[data-mode="micro"],.ctx-swatch.dot-micro{--ctx-colour:#8c73bd}
+.ctx-seg[data-mode="theory"],.ctx-swatch.dot-theory{--ctx-colour:#5c9bd8}
+.ctx-seg[data-mode="exam"],.ctx-swatch.dot-exam{--ctx-colour:#6aaa95}
+.ctx-chips{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px}
+.ctx-chip{display:flex!important;align-items:center!important;gap:7px;min-width:0;padding:0!important;background:transparent!important;color:#383548!important;border:0!important;border-radius:0!important;box-shadow:none!important;text-align:left!important;font-size:12px!important;font-weight:500!important;transform:none!important;transition:opacity .2s ease,color .2s ease!important}
+.ctx-chip:hover,.ctx-chip[data-on="true"]{color:#6550a9!important}.ctx-chip{cursor:default!important}
+.ctx-chip[data-dim="true"]{opacity:.45}
+.ctx-chip b{margin-left:auto;font-size:12px;color:#777386;font-weight:700;white-space:nowrap}
+.ctx-swatch{display:block;width:8px;height:8px;flex:0 0 8px;border-radius:50%;background:var(--ctx-colour)}
+.ctx-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ctx-footnote{display:block;margin-top:13px;color:#858092;font-size:11px;line-height:1.45}
+@media(max-width:900px){.context-meter-card{padding:17px 15px}.ctx-figure strong{font-size:32px}}
+@media(max-width:600px){.ctx-bar,.ctx-seg{height:16px!important}.ctx-chips{gap:11px 8px}.ctx-chip{font-size:11px!important}.ctx-footnote{font-size:10px}}
+@media(prefers-reduced-motion:reduce){.ctx-seg,.ctx-figure strong,.ctx-chip{transition:none!important}}
 </style></head><body>
 <header class="topbar"><div class="brand" onclick="home()"><span class="brand-mark">⚕</span><span>ТестПатан ВГМУ<small>Патологическая анатомия</small></span></div><div class="top-search"><span>⌕</span><div id="searchDrop" class="search-drop" hidden></div><input id="siteSearch" placeholder="Поиск по темам, разделам, терминам…" autocomplete="off" oninput="searchSuggest(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();searchSite(this.value)}else if(event.key==='Escape')searchClose()"></div><div class="top-actions"><div class="notif-wrap"><button class="icon-action bell" id="bellBtn" title="Уведомления" aria-label="Уведомления" onclick="toggleNotifs(event)"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 1 1 12 0c0 4.6 1.6 6.2 2 6.5H4c.4-.3 2-1.9 2-6.5z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg><span class="bell-badge" id="bellBadge" hidden></span></button><div id="notifPanel" class="notif-panel" hidden></div></div><nav id="nav"></nav></div></header>
 <aside class="sidebar" id="sidebar"><div class="side-links"><button class="side-link active" data-side="home" onclick="home()"><span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11 12 3.8l8.5 7.2"/><path d="M5.5 9.8V20h13V9.8"/><path d="M10 20v-5.5h4V20"/></svg></span>Главная</button><button class="side-link" onclick="sectionsPage()"><span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 9 4.5-9 4.5-9-4.5z"/><path d="m3 12 9 4.5 9-4.5"/><path d="m3 16.5 9 4.5 9-4.5"/></svg></span>Разделы</button><button class="side-link" onclick="profile()"><span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="14" width="4" height="6.5" rx="1.2"/><rect x="10" y="9" width="4" height="11.5" rx="1.2"/><rect x="16.5" y="4" width="4" height="16.5" rx="1.2"/></svg></span>Статистика</button><button class="side-link" onclick="favoritesPage()"><span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3.5h11V21L12 16.8 6.5 21z"/></svg></span>Избранное</button><button class="side-link" onclick="materialsPage()"><span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5C10 5 7 4.5 3.5 5v13.5c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5C17 4.5 14 5 12 6.5z"/><path d="M12 6.5V20"/></svg></span>Материалы</button></div><div class="side-quote">«Патологическая анатомия — это язык, на котором организм говорит с врачом.»</div><div class="side-bottom-art" aria-hidden="true"></div></aside>
@@ -483,9 +490,8 @@ function home(mark=true){if(mark)markRoute('home');
   const modeCards=[['macro','Макро','Макроскопическое строение органов и тканей.','<img src="assets/asset-liver.png" alt="">','mode-macro'],['micro','Микро','Микроскопические изменения и морфология.','<img src="assets/asset-microscope.png" alt="">','mode-micro'],['theory','Теория','Основные понятия, классификации, схемы.','<img src="assets/asset-book.png" alt="">','mode-theory'],['exam','Экзамен','Итоговые тесты и контроль знаний.','<img src="assets/asset-cap.png" alt="">','mode-exam']];
   app.innerHTML=`<div class="dashboard"><div class="dashboard-main"><section class="hero-banner"><div class="hero-copy"><div class="eyebrow">ПАТОЛОГИЧЕСКАЯ АНАТОМИЯ · ВГМУ</div><h1>Проверь знания.<br>Находи темы для<br>повторения.</h1><p>Удобные тесты, структурированные разделы и наглядные материалы для эффективной подготовки к занятиям и экзаменам.</p><div class="hero-script">Знания сегодня —<br>уверенность завтра ♡</div></div><div class="hero-histology" aria-hidden="true"><div class="hero-pager"><button onclick="toast('Вы на главной странице')">←</button><span>○</span><button onclick="pick('macro')">→</button></div></div></section>
   <div class="section-heading"><h2><span></span>Разделы</h2></div><div class="dashboard-modes">`+modeCards.map(m=>`<button class="dash-mode ${m[4]}" onclick="pick('${m[0]}')"><div class="mode-art">${m[3]}</div><div class="mode-meta"><strong>${m[1]}</strong><small>${m[2]}</small></div><span class="mode-arrow">→</span></button>`).join('')+`</div>
-  <section class="widget home-mode-meter-widget"><div class="widget-head"><div><h3>Прогресс по основным режимам</h3><p class="home-mode-meter-subtitle">Точность ответов в каждом режиме</p></div><button class="text-link" onclick="profile()">Подробнее →</button></div><div class="home-mode-meter" id="home-mode-meter" aria-label="Прогресс по режимам">${['macro','micro','theory','exam'].map(m=>`<button class="home-mode-meter-segment" data-mode="${m}" onclick="pick('${m}')" title="${MODES[m][1]}: пока нет данных"><span class="home-mode-meter-fill" style="width:0%"></span></button>`).join('')}</div><div class="home-mode-meter-labels" id="home-mode-meter-labels">${['macro','micro','theory','exam'].map(m=>`<button class="home-mode-meter-label" onclick="pick('${m}')"><span class="home-mode-dot dot-${m}"></span><span class="home-mode-name">${MODES[m][1]}</span><b>—</b></button>`).join('')}</div></section>
   <div class="lower-widgets"><section class="widget updates-widget"><div class="widget-head"><h3>Последние результаты</h3><button class="text-link" onclick="profile()">Все попытки →</button></div><div id="home-latest-results"><div class="update-row"><span>▤</span><div><b>Последние результаты</b><small>Загрузка истории попыток…</small></div></div></div></section><section class="widget home-favorites-widget"><div class="widget-head"><h3>★ Избранные вопросы</h3><button class="text-link" onclick="favoritesPage()">Перейти ко всем →</button></div><div id="home-favorites-list" class="home-favorites-list"><div class="favorite-empty compact-empty">Загрузка избранных вопросов…</div></div></section></div></div>
-  <aside class="dashboard-rail"><section class="widget rail-progress"><div class="widget-head"><h3>Ваш прогресс</h3><button class="text-link" onclick="profile()">Подробнее →</button></div><div class="rail-ring-row"><div class="donut large" id="rail-donut"><span>0%</span></div><div><b>Общий прогресс</b><small id="rail-progress-caption">${me?'Загрузка результатов…':'Войди, чтобы увидеть результаты'}</small></div></div><div class="mini-stats" id="rail-mode-stats"><div><i class="dot dot-macro"></i>Макро <span>0</span></div><div><i class="dot dot-micro"></i>Микро <span>0</span></div><div><i class="dot dot-theory"></i>Теория <span>0</span></div><div><i class="dot dot-exam"></i>Экзамен <span>0</span></div></div></section><section class="widget today-widget"><div class="widget-head"><h3>Для подготовки</h3></div><button class="rail-action" onclick="pick('marathon')"><span class="brain-icon-wrap">${brainIcon()}</span><span><b>Марафон</b><small>Большой интеллектуальный вызов: задания всех тем выбранного режима в одном тесте.</small></span><i>›</i></button></section><section class="quote-card"><div class="quote-art">✧</div><blockquote>«Морфология всего живого — это история болезни и здоровья.»</blockquote><div class="quote-divider"></div><div class="quote-foot">♡ <span>Патологическая анатомия — основа клинического мышления.</span></div></section></aside></div>`;
+  <aside class="dashboard-rail"><section class="widget rail-progress context-meter-card"><div class="widget-head"><div><h3>Ваш прогресс</h3><p class="ctx-subtitle">Результаты по основным режимам</p></div><button class="text-link" onclick="profile()">Подробнее →</button></div><div class="ctx-figure"><strong id="ctx-meter-number">—</strong><span id="ctx-meter-caption">общая точность</span></div><div class="ctx-bar" id="home-mode-meter" role="group" aria-label="Прогресс по основным режимам">${['macro','micro','theory','exam'].map(m=>`<span class="ctx-seg" data-mode="${m}" title="${MODES[m][1]}: пока нет данных" aria-label="${MODES[m][1]}"></span>`).join('')}</div><div class="ctx-chips" id="home-mode-meter-labels">${['macro','micro','theory','exam'].map(m=>`<div class="ctx-chip" data-mode="${m}"><i class="ctx-swatch dot-${m}"></i><span>${MODES[m][1]}</span><b>—</b></div>`).join('')}</div><small class="ctx-footnote" id="rail-progress-caption">${me?'Загрузка результатов…':'Войдите, чтобы увидеть свои результаты'}</small></section><section class="widget today-widget"><div class="widget-head"><h3>Для подготовки</h3></div><button class="rail-action" onclick="pick('marathon')"><span class="brain-icon-wrap">${brainIcon()}</span><span><b>Марафон</b><small>Большой интеллектуальный вызов: задания всех тем выбранного режима в одном тесте.</small></span><i>›</i></button></section><section class="quote-card"><div class="quote-art">✧</div><blockquote>«Морфология всего живого — это история болезни и здоровья.»</blockquote><div class="quote-divider"></div><div class="quote-foot">♡ <span>Патологическая анатомия — основа клинического мышления.</span></div></section></aside></div>`;
   document.querySelectorAll('.side-link').forEach(x=>x.classList.toggle('active',x.dataset.side==='home'));
   loadHomeProgress(); loadHomeContent(); loadLatestResults(); loadHomeFavorites();
 }
@@ -986,45 +992,70 @@ async function adminStats(level=''){
 }
 
 async function loadHomeProgress(){
- const captions=['home-progress-caption','rail-progress-caption'].map(id=>$('#'+id)).filter(Boolean);
- if(!me){captions.forEach(cap=>cap.textContent='Войди, чтобы увидеть результаты');return}
+ const caption=$('#rail-progress-caption'),number=$('#ctx-meter-number'),numberCaption=$('#ctx-meter-caption');
+ const meter=$('#home-mode-meter'),labels=$('#home-mode-meter-labels');
+ const modeKeys=['macro','micro','theory','exam'];
+ const empty={macro:{answered:0,correct:0,pct:0},micro:{answered:0,correct:0,pct:0},theory:{answered:0,correct:0,pct:0},exam:{answered:0,correct:0,pct:0}};
+ const render=(stats,overall,answeredTotal,hasData)=>{
+  const totalByMode=modeKeys.reduce((n,m)=>n+stats[m].answered,0);
+  if(number)number.textContent=hasData?`${overall}%`:'—';
+  if(numberCaption)numberCaption.textContent=hasData?'общая точность':'нет результатов';
+  if(caption)caption.textContent=hasData?`${answeredTotal} ответов на вопросы`:'Войдите, чтобы увидеть свои результаты';
+  if(meter){
+   meter.querySelectorAll('.ctx-seg').forEach(el=>{
+    const m=el.dataset.mode,st=stats[m]||empty[m];
+    el.style.flexGrow=String(st.answered||0.01);
+    el.title=`${MODES[m][1]}: ${st.answered?`${st.pct}% точных ответов · ${st.answered} ответов`:'пока нет данных'}`;
+    el.setAttribute('aria-label',el.title);
+    el.onpointerenter=()=>setContextMeterHot(m,stats);
+    el.onfocus=()=>setContextMeterHot(m,stats);
+    el.onpointerleave=()=>clearContextMeterHot(stats,overall,hasData);
+    el.onblur=()=>clearContextMeterHot(stats,overall,hasData);
+   });
+   meter.onpointerleave=()=>clearContextMeterHot(stats,overall,hasData);
+  }
+  if(labels){labels.innerHTML=modeKeys.map(m=>{const st=stats[m];return `<div class="ctx-chip" data-mode="${m}" onpointerenter="setContextMeterHot('${m}')" onpointerleave="clearContextMeterHot()"><i class="ctx-swatch dot-${m}"></i><span>${MODES[m][1]}</span><b>${st.answered?st.pct+'%':'—'}</b></div>`}).join('');}
+  window.__testPatanModeStats=stats;window.__testPatanOverallAccuracy=overall;window.__testPatanHasProgress=hasData;
+ };
+ if(!me){render(empty,0,0,false);return}
  try{
   const {data:attemptsData,error:attemptsError}=await sb.from('attempts').select('id,mode,question_count,status,created_at').eq('user_id',me.id).order('created_at',{ascending:false}).limit(1000);
   if(attemptsError)throw attemptsError;
-  const attempts=attemptsData||[], ids=attempts.map(x=>x.id).filter(Boolean), statsByAttempt={};
-  // Fetch in small ID batches and paginate rows to avoid PostgREST response caps.
+  const attempts=attemptsData||[],ids=attempts.map(x=>x.id).filter(Boolean),statsByAttempt={};
   for(let i=0;i<ids.length;i+=50){
    const batch=ids.slice(i,i+50);
-   let from=0, pageSize=500;
-   while(true){
-    const {data:answerRows,error:answerError}=await sb.rpc('get_my_attempt_stats',{p_attempt_ids:batch});
-    if(answerError)throw answerError;
-    const rows=answerRows||[];
-    rows.forEach(x=>{statsByAttempt[x.attempt_id]={answered:Number(x.answered_count||0),correct:Number(x.correct_count||0)}});
-    break;
-   }
+   const {data:answerRows,error:answerError}=await sb.rpc('get_my_attempt_stats',{p_attempt_ids:batch});
+   if(answerError)throw answerError;
+   (answerRows||[]).forEach(x=>{statsByAttempt[x.attempt_id]={answered:Number(x.answered_count||0),correct:Number(x.correct_count||0)}});
   }
-  const sum=Object.values(statsByAttempt).reduce((n,x)=>n+x.correct,0),total=Object.values(statsByAttempt).reduce((n,x)=>n+x.answered,0),pct=total?Math.round(sum/total*100):0;
-  const modeColors={macro:'#b87898',micro:'#8c73bd',theory:'#5c9bd8',exam:'#6aaa95'};
-  const modeTotals=['macro','micro','theory','exam'].map(m=>({mode:m,count:attempts.filter(x=>x.mode===m).reduce((n,x)=>n+Number(statsByAttempt[x.id]?.answered||0),0)}));
-  const modeGrand=modeTotals.reduce((n,x)=>n+x.count,0);
-  // The context-meter segments represent accuracy (correct / answered) for each main mode.
-  const meter=$('#home-mode-meter'),meterLabels=$('#home-mode-meter-labels');
-  const modeAccuracy={};
-  ['macro','micro','theory','exam'].forEach(m=>{const rows=attempts.filter(x=>x.mode===m),correct=rows.reduce((n,x)=>n+Number(statsByAttempt[x.id]?.correct||0),0),answered=rows.reduce((n,x)=>n+Number(statsByAttempt[x.id]?.answered||0),0);modeAccuracy[m]={correct,answered,pct:answered?Math.round(correct/answered*100):0};});
-  if(meter){meter.querySelectorAll('.home-mode-meter-segment').forEach(el=>{const m=el.dataset.mode,st=modeAccuracy[m]||{answered:0,pct:0};const fill=el.querySelector('.home-mode-meter-fill');if(fill)fill.style.width=st.pct+'%';el.title=`${MODES[m][1]}: ${st.answered?st.pct+'% точных ответов':'пока нет данных'}`;el.setAttribute('aria-label',el.title);});}
-  if(meterLabels){meterLabels.innerHTML=['macro','micro','theory','exam'].map(m=>{const st=modeAccuracy[m]||{answered:0,pct:0};return `<button class="home-mode-meter-label" onclick="pick('${m}')" title="Открыть режим ${MODES[m][1]}"><span class="home-mode-dot dot-${m}"></span><span class="home-mode-name">${MODES[m][1]}</span><b>${st.answered?st.pct+'%':'—'}</b></button>`}).join('')}
-  let angle=0;const segments=[];
-  modeTotals.forEach(x=>{if(x.count>0&&modeGrand>0){const end=angle+100*x.count/modeGrand;segments.push(`${modeColors[x.mode]} ${angle}% ${end}%`);angle=end}});
-  if(angle<100)segments.push(`#e7dfe8 ${angle}% 100%`);
-  for(const id of ['home-donut','rail-donut']){const donut=$('#'+id);if(donut){donut.style.background=segments.length?`conic-gradient(${segments.join(',')})`:'conic-gradient(#e7dfe8 0% 100%)';const label=donut.querySelector('span');if(label)label.textContent=pct+'%'}}
-  captions.forEach(cap=>cap.textContent=`${sum} из ${total} правильных ответов`);
-  for(const id of ['home-mode-stats','rail-mode-stats']){const el=$('#'+id);if(el)el.innerHTML=['macro','micro','theory','exam'].map(m=>{const rows=attempts.filter(x=>x.mode===m),c=rows.reduce((n,x)=>n+Number(statsByAttempt[x.id]?.correct||0),0),t=rows.reduce((n,x)=>n+Number(statsByAttempt[x.id]?.answered||0),0);return `<div><i class="dot dot-${m}"></i>${MODES[m][1]} <span>${c}/${t}</span></div>`}).join('')}
+  const stats={...empty};
+  modeKeys.forEach(m=>{
+   const rows=attempts.filter(x=>x.mode===m);let answered=0,correct=0;
+   rows.forEach(x=>{answered+=Number(statsByAttempt[x.id]?.answered||0);correct+=Number(statsByAttempt[x.id]?.correct||0)});
+   stats[m]={answered,correct,pct:answered?Math.round(correct/answered*100):0};
+  });
+  const answeredTotal=modeKeys.reduce((n,m)=>n+stats[m].answered,0),correctTotal=modeKeys.reduce((n,m)=>n+stats[m].correct,0);
+  render(stats,answeredTotal?Math.round(correctTotal/answeredTotal*100):0,answeredTotal,answeredTotal>0);
  }catch(e){
   console.error('Не удалось загрузить прогресс:',e);
-  const detail=e?.message?` (${e.message})`:'';
-  captions.forEach(cap=>cap.textContent='Не удалось загрузить результаты'+detail);
+  if(number)number.textContent='—';if(numberCaption)numberCaption.textContent='не удалось загрузить';
+  if(caption)caption.textContent='Не удалось загрузить результаты';
  }
+}
+function setContextMeterHot(mode,stats=window.__testPatanModeStats){
+ if(!mode||!stats)return;
+ const st=stats[mode];if(!st)return;
+ const n=$('#ctx-meter-number'),c=$('#ctx-meter-caption');
+ if(n)n.textContent=st.answered?`${st.pct}%`:'—';
+ if(c)c.textContent=`${MODES[mode][1]} · точность`;
+ document.querySelectorAll('#home-mode-meter .ctx-seg').forEach(el=>el.dataset.dim=el.dataset.mode!==mode?'true':'false');
+ document.querySelectorAll('#home-mode-meter-labels .ctx-chip').forEach(el=>{el.dataset.dim=el.dataset.mode!==mode?'true':'false';el.dataset.on=el.dataset.mode===mode?'true':'false'});
+}
+function clearContextMeterHot(stats=window.__testPatanModeStats,overall=window.__testPatanOverallAccuracy,hasData=window.__testPatanHasProgress){
+ const n=$('#ctx-meter-number'),c=$('#ctx-meter-caption');
+ if(n)n.textContent=hasData?`${overall}%`:'—';
+ if(c)c.textContent=hasData?'общая точность':'нет результатов';
+ document.querySelectorAll('#home-mode-meter .ctx-seg,#home-mode-meter-labels .ctx-chip').forEach(el=>{el.dataset.dim='false';el.dataset.on='false'});
 }
 async function loadHomeContent(){try{const {data}=await sb.from('site_content').select('key,value');if(!data)return;const c=Object.fromEntries(data.map(x=>[x.key,x.value]));const hero=$('.hero-histology');if(hero&&c.hero_image)hero.style.setProperty('--hero',`url("${String(c.hero_image).replace(/"/g,'%22')}")`);const script=$('.hero-script');if(script&&c.left_quote)script.innerHTML=esc(c.left_quote).replace(/\n/g,'<br>');const quote=$('.quote-card blockquote');if(quote&&c.right_quote)quote.textContent=c.right_quote;const side=$('.side-quote');if(side&&c.left_quote)side.textContent=c.left_quote;}catch(e){console.warn('home content',e)}}
 async function toggleFavorite(questionId){if(!me){toast('Войдите, чтобы сохранять избранное');return}Q.favorites=Q.favorites||{};if(Q.favorites[questionId]){const {error}=await sb.from('question_favorites').delete().eq('user_id',me.id).eq('question_id',questionId);if(error)return toast(msg(error));delete Q.favorites[questionId]}else{const {error}=await sb.from('question_favorites').insert({user_id:me.id,question_id:questionId});if(error)return toast(msg(error));Q.favorites[questionId]=true}showQ()}
