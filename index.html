@@ -1415,6 +1415,30 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){const tip=document.
 #stb-plot .stb-seam { z-index: 3; pointer-events: none; }
 </style>
 
+
+<style id="stb-hard-remove-track-v2">
+/* Chart hit-targets must remain invisible; only data segments may paint pixels. */
+#stb-plot > button.stb-col,
+#stb-plot > button.stb-col:hover,
+#stb-plot > button.stb-col:active,
+#stb-plot > button.stb-col:focus,
+#stb-plot > button.stb-col:focus-visible {
+  appearance:none !important; -webkit-appearance:none !important;
+  background:transparent !important; background-color:transparent !important; background-image:none !important;
+  border:0 !important; outline:0 !important; box-shadow:none !important;
+  border-radius:0 !important; filter:none;
+}
+#stb-plot > button.stb-col::before,
+#stb-plot > button.stb-col::after,
+#stb-plot > button.stb-col > .stb-stack::before,
+#stb-plot > button.stb-col > .stb-stack::after,
+#stb-plot > button.stb-col > .stb-wrong-bar::before,
+#stb-plot > button.stb-col > .stb-wrong-bar::after {
+  content:none !important; display:none !important; background:none !important; border:0 !important; box-shadow:none !important;
+}
+#stb-plot > button.stb-col > .stb-stack {background:transparent !important; border:0 !important; box-shadow:none !important; outline:0 !important;}
+#stb-plot > button.stb-col > .stb-wrong-bar {box-shadow:none !important; outline:0 !important; border:0 !important;}
+</style>
 </body>
 <style id="stats-chart-clean-lines-and-favorite-toggle">
 /* Keep the chart clean on desktop and mobile: only the baseline remains. */
