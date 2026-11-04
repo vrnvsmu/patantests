@@ -1358,13 +1358,13 @@ loadNotifs();
 .stb-figure{display:flex;align-items:baseline;gap:8px;margin:12px 0 8px}.stb-figure strong{font-size:27px;letter-spacing:-.04em;font-weight:700;font-variant-numeric:tabular-nums}.stb-unit{font-size:12px;color:var(--muted,#667085)}
 .stb-stage{position:relative;padding-top:5px}
 .stb-plot{--stb-baseline:29px;height:194px;position:relative;z-index:1;display:flex;align-items:stretch;gap:clamp(3px,.7vw,8px);padding:0 5px;border-bottom:0;overflow:visible;touch-action:pan-y}
-.stb-plot:after{content:"";position:absolute;left:5px;right:5px;top:auto;bottom:var(--stb-baseline);border-top:1px solid #e9e4ed;pointer-events:none;z-index:4}
+.stb-plot:after{content:none!important}
 .stb-gridlines{position:absolute;inset:5px 5px 30px;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none;z-index:0}.stb-gridlines i{display:block;border-top:1px solid #f0edf1}
 .stb-col{position:relative;z-index:1;flex:1;min-width:3px;max-width:38px;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:stretch;cursor:pointer;border-radius:5px 5px 0 0;outline:none;padding:0!important;border:0!important;background:transparent!important;color:inherit;transition:opacity .2s ease,filter .2s ease}
 .stb-col:focus-visible{outline:2px solid #6d579b!important;outline-offset:3px!important;border-radius:5px 5px 0 0}.stb-col.is-active .stb-stack{filter:drop-shadow(0 2px 3px #34234b25)}.stb-plot.has-hover .stb-col:not(.is-active){opacity:.42}
 .stb-stack{position:absolute;left:0;bottom:30px;width:100%;margin-top:0;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;border-radius:5px 5px 0 0;transform-origin:bottom;animation:stb-rise .55s cubic-bezier(.16,1,.3,1) both;transition:filter .2s ease}
 .stb-wrong-bar{position:absolute;left:0;bottom:calc(var(--stb-baseline) - var(--wrong-height, 0px));width:100%;min-height:0;background:var(--stb-incorrect);border-radius:0 0 4px 4px;opacity:.95;transition:height .3s ease}
-.stb-plot:after{top:auto;bottom:29px}
+.stb-plot:after{content:none!important}
 .stb-seg{display:block;flex:0 0 auto;min-height:0;width:100%;box-sizing:border-box;transition:height .35s cubic-bezier(.2,.8,.2,1),filter .2s ease}.stb-seg:first-child{border-radius:0 0 2px 2px}.stb-seg:last-child{border-radius:4px 4px 0 0}
 .stb-col.is-active .stb-seg{filter:saturate(1.13)}
 @keyframes stb-rise{from{transform:scaleY(.04);opacity:.45}to{transform:scaleY(1);opacity:1}}
@@ -1388,7 +1388,7 @@ function renderModeStackedChart(attempts,period='day'){
  const max=Math.max(1,...buckets.map(b=>b.total));const maxWrong=Math.max(1,...buckets.map(b=>b.wrong));plot.innerHTML='';plot.classList.remove('has-hover');const maxH=150;const negH=window.matchMedia('(max-width: 600px)').matches?18:22;
  buckets.forEach((b,i)=>{const col=document.createElement('button');col.type='button';col.className='stb-col';col.setAttribute('aria-label',`${b.label}: ${b.total} вопросов`);col.setAttribute('aria-describedby','stb-tip');col.style.animationDelay=`${Math.min(i*12,180)}ms`;col.style.padding='0';col.style.border='0';col.style.background='transparent';col.style.color='inherit';col.style.alignSelf='stretch';col.dataset.index=String(i);
  const stack=document.createElement('span');stack.className='stb-stack';const barHeight=b.total?Math.max(3,b.total/max*150):0;stack.style.height=`${barHeight}px`;stack.style.bottom='var(--stb-baseline)';
- b.vals.forEach((v,k)=>{if(!v)return;const seg=document.createElement('span');seg.className='stb-seg';seg.dataset.mode=keys[k];seg.style.backgroundColor=colors[k];seg.style.height=`${(v/Math.max(1,b.total))*100}%`;seg.style.flexBasis=`${(v/Math.max(1,b.total))*100}%`;seg.setAttribute('aria-label',`${names[keys[k]]}: ${v}`);stack.appendChild(seg);});col.appendChild(stack);const wrongBar=document.createElement('span');wrongBar.className='stb-wrong-bar';const wrongHeight=b.wrong?Math.max(2,b.wrong/maxWrong*negH):0;wrongBar.style.height=`${wrongHeight}px`;wrongBar.style.setProperty('--wrong-height',`${wrongHeight}px`);wrongBar.setAttribute('aria-label',`Неверные ответы: ${b.wrong}`);col.appendChild(wrongBar);
+ b.vals.forEach((v,k)=>{if(!v)return;const seg=document.createElement('span');seg.className='stb-seg';seg.dataset.mode=keys[k];seg.style.backgroundColor=colors[k];seg.style.height=`${(v/Math.max(1,b.total))*100}%`;seg.style.flexBasis=`${(v/Math.max(1,b.total))*100}%`;seg.setAttribute('aria-label',`${names[keys[k]]}: ${v}`);stack.appendChild(seg);});col.appendChild(stack);const wrongBar=document.createElement('span');wrongBar.className='stb-wrong-bar';const wrongHeight=b.wrong?Math.max(2,b.wrong/maxWrong*negH):0;wrongBar.style.height=`${wrongHeight}px`;wrongBar.style.setProperty('--wrong-height',`${wrongHeight}px`);wrongBar.setAttribute('aria-label',`Неверные ответы: ${b.wrong}`);col.appendChild(wrongBar);if(b.total>0&&b.wrong>0){const seam=document.createElement('span');seam.className='stb-seam';seam.setAttribute('aria-hidden','true');col.appendChild(seam);}
  const enter=e=>{plot.classList.add('has-hover');showModeStackedTip(b,col,keys,names,colors,e);};
  col.addEventListener('pointerenter',enter);col.addEventListener('pointermove',e=>positionModeStackedTip(e,col));col.addEventListener('focus',()=>{plot.classList.add('has-hover');showModeStackedTip(b,col,keys,names,colors,null);});col.addEventListener('click',e=>{plot.classList.add('has-hover');showModeStackedTip(b,col,keys,names,colors,e);});col.addEventListener('pointerleave',()=>{if(document.activeElement!==col){col.classList.remove('is-active');plot.classList.remove('has-hover');const tip=document.getElementById('stb-tip');if(tip)tip.hidden=true;}});col.addEventListener('blur',()=>{col.classList.remove('is-active');plot.classList.remove('has-hover');const tip=document.getElementById('stb-tip');if(tip)tip.hidden=true;});plot.appendChild(col);});
  const axis=document.getElementById('stb-axis');if(axis){if(period==='day'){axis.innerHTML=`<span>${buckets[0].label}</span><span>${buckets[5].label}</span><span>${buckets[10].label}</span><span>${buckets[15].label}</span><span>${buckets[19].label}</span>`;}else{axis.innerHTML=`<span>${buckets[0].label}</span><span>${buckets[3].label}</span><span>${buckets[6].label}</span><span>${buckets[9].label}</span><span>${buckets[11].label}</span>`;}}
@@ -1397,11 +1397,29 @@ function showModeStackedTip(b,col,keys,names,colors,event){const tip=document.ge
 function positionModeStackedTip(event,col){const tip=document.getElementById('stb-tip');if(!tip||tip.hidden)return;const cr=col.getBoundingClientRect();let x=event&&Number.isFinite(event.clientX)?event.clientX:cr.left+cr.width/2;let y=event&&Number.isFinite(event.clientY)?event.clientY:cr.top;const width=tip.offsetWidth||180,height=tip.offsetHeight||130;let left=x+16;if(left+width>window.innerWidth-8)left=x-width-16;left=Math.max(8,Math.min(window.innerWidth-width-8,left));let top=y-height-12;if(top<8)top=Math.min(window.innerHeight-height-8,y+16);top=Math.max(8,Math.min(window.innerHeight-height-8,top));tip.style.left=`${left}px`;tip.style.top=`${top}px`;}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){const tip=document.getElementById('stb-tip');if(tip)tip.hidden=true;document.querySelectorAll('.stb-col.is-active').forEach(x=>x.classList.remove('is-active'));document.getElementById('stb-plot')?.classList.remove('has-hover');}});
 </script>
+
+<style id="stb-remove-empty-track-under-negative-bars">
+/* A column is only a hit target: never draw a pale capsule/outline behind the data. */
+#stb-plot .stb-col,
+#stb-plot .stb-col:hover,
+#stb-plot .stb-col:active,
+#stb-plot .stb-col:focus,
+#stb-plot .stb-col:focus-visible {
+  border: 0 !important; outline: none !important; box-shadow: none !important;
+  background: transparent !important; border-radius: 0 !important;
+  -webkit-appearance: none !important; appearance: none !important;
+}
+#stb-plot .stb-col::before,
+#stb-plot .stb-col::after { content: none !important; display: none !important; }
+#stb-plot .stb-wrong-bar { z-index: 2; box-shadow: none !important; border: 0 !important; }
+#stb-plot .stb-seam { z-index: 3; pointer-events: none; }
+</style>
+
 </body>
 <style id="stats-chart-clean-lines-and-favorite-toggle">
 /* Keep the chart clean on desktop and mobile: only the baseline remains. */
 .stb-gridlines{display:none!important}
-.stb-plot:after{border-top:1px solid #e9e4ed!important;z-index:4;pointer-events:none}
+.stb-plot:after{content:none!important}
 .stb-wrong-bar{z-index:1;border-radius:0 0 4px 4px;max-height:22px}
 @media(max-width:600px){.stb-plot{--stb-baseline:27px}.stb-wrong-bar{max-height:18px}}
 /* Astryx ToggleButton-inspired favorite control: compact, tactile, animated pressed state. */
@@ -1482,3 +1500,10 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){const tip=document.
 function toggleSiteSearch(){const wrap=document.querySelector('.top-search'),input=document.getElementById('siteSearch');if(!wrap||!input)return;const open=wrap.classList.toggle('is-open');if(open){setTimeout(()=>input.focus(),80)}else{input.value='';searchClose();}}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){const wrap=document.querySelector('.top-search');if(wrap&&wrap.classList.contains('is-open')){wrap.classList.remove('is-open');const input=document.getElementById('siteSearch');if(input)input.value='';searchClose();}}});
 </script>
+
+<style id="stb-separator-local-fix">
+/* Separator belongs to each active bar, not a chart-wide horizontal rule. */
+.stb-plot:after{display:none!important;content:none!important}
+.stb-col .stb-seam{position:absolute;left:0;right:0;bottom:calc(var(--stb-baseline,29px) - 1px);height:2px;background:#fffdfc;box-shadow:0 0 0 1px rgba(233,228,237,.45);z-index:3;pointer-events:none;border-radius:1px}
+@media(max-width:600px){.stb-col .stb-seam{height:2px;bottom:calc(var(--stb-baseline,27px) - 1px)}}
+</style>
