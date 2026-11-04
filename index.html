@@ -1638,6 +1638,25 @@ if(!window.__stbBound){
 function toggleSiteSearch(){const wrap=document.querySelector('.top-search'),input=document.getElementById('siteSearch');if(!wrap||!input)return;const open=wrap.classList.toggle('is-open');if(open){setTimeout(()=>input.focus(),80)}else{input.value='';searchClose();}}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){const wrap=document.querySelector('.top-search');if(wrap&&wrap.classList.contains('is-open')){wrap.classList.remove('is-open');const input=document.getElementById('siteSearch');if(input)input.value='';searchClose();}}});
 </script>
+<style id="mobile-search-in-row">
+/* Мобильная шапка: [колокольчик] [кнопки аккаунта] [поиск] в одном ряду.
+   При открытии поиск раскрывается на всю ширину ряда и скрывает остальные кнопки. */
+@media (max-width:700px){
+  .topbar{display:flex!important;flex-wrap:wrap!important;align-items:center!important;gap:8px!important}
+  .topbar .brand{order:0!important;flex:1 1 100%!important}
+  .topbar .top-actions,.topbar .top-actions nav{display:contents!important}
+  .topbar .notif-wrap{order:1!important;flex:0 0 auto!important}
+  .topbar .top-actions nav button.ghost{order:2!important;flex:1 1 0!important;min-width:0!important;height:42px!important;padding:0 8px!important;border-radius:999px!important;font-size:12px!important;white-space:nowrap!important;overflow:hidden;text-overflow:ellipsis}
+  .topbar .top-search{order:3!important;flex:0 0 42px!important;width:42px!important;max-width:42px!important;height:42px!important;margin-left:auto!important}
+  .topbar .top-search.is-open{flex:1 1 100%!important;width:100%!important;max-width:none!important}
+  /* поиск открыт — остальные кнопки скрыты, поиск занимает весь ряд */
+  .topbar:has(.top-search.is-open) .notif-wrap,
+  .topbar:has(.top-search.is-open) .top-actions nav button.ghost{display:none!important}
+  .topbar .top-search.is-open{animation:mobSearchOpen .28s cubic-bezier(.2,.8,.2,1)}
+  @keyframes mobSearchOpen{from{opacity:.4;transform:scaleX(.9);transform-origin:right center}to{opacity:1;transform:none}}
+}
+@media (max-width:700px) and (prefers-reduced-motion:reduce){.topbar .top-search.is-open{animation:none}}
+</style>
 
 <style id="stb-separator-local-fix">
 /* Separator belongs to each active bar, not a chart-wide horizontal rule. */
