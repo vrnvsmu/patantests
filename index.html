@@ -1353,49 +1353,163 @@ loadNotifs();
 :root{--stb-macro:#b87898;--stb-micro:#8c73bd;--stb-theory:#5c9bd8;--stb-exam:#6aaa95;--stb-incorrect:#d98b9e}
 .stb-head{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:12px}
 .stb-seg-ctl{display:flex;gap:3px;padding:3px;background:#f4f1f5;border:1px solid #e8e1eb;border-radius:11px}
-.stb-tab{border:0;background:transparent;color:#81798a;border-radius:8px;padding:7px 12px;font:inherit;font-size:13px;cursor:pointer;transition:background .22s ease,color .22s ease,box-shadow .22s ease}
+.stb-tab{border:0;background:transparent;color:#81798a;border-radius:8px;padding:7px 14px;font:inherit;font-size:13px;box-shadow:none;cursor:pointer;transition:background .22s ease,color .22s ease,box-shadow .22s ease}
+.stb-tab:hover{color:#302b3b}
 .stb-tab.is-active{background:#fff;color:#302b3b;box-shadow:0 1px 4px #30204417}
-.stb-figure{display:flex;align-items:baseline;gap:8px;margin:12px 0 8px}.stb-figure strong{font-size:27px;letter-spacing:-.04em;font-weight:700;font-variant-numeric:tabular-nums}.stb-unit{font-size:12px;color:var(--muted,#667085)}
-.stb-stage{position:relative;padding-top:5px}
-.stb-plot{--stb-baseline:29px;height:194px;position:relative;z-index:1;display:flex;align-items:stretch;gap:clamp(3px,.7vw,8px);padding:0 5px;border-bottom:0;overflow:visible;touch-action:pan-y}
-.stb-plot:after{content:none!important}
-.stb-gridlines{position:absolute;inset:5px 5px 30px;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none;z-index:0}.stb-gridlines i{display:block;border-top:1px solid #f0edf1}
-.stb-col{position:relative;z-index:1;flex:1;min-width:3px;max-width:38px;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:stretch;cursor:pointer;border-radius:5px 5px 0 0;outline:none;padding:0!important;border:0!important;background:transparent!important;color:inherit;transition:opacity .2s ease,filter .2s ease}
-.stb-col:focus-visible{outline:2px solid #6d579b!important;outline-offset:3px!important;border-radius:5px 5px 0 0}.stb-col.is-active .stb-stack{filter:drop-shadow(0 2px 3px #34234b25)}.stb-plot.has-hover .stb-col:not(.is-active){opacity:.42}
-.stb-stack{position:absolute;left:0;bottom:30px;width:100%;margin-top:0;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;border-radius:5px 5px 0 0;transform-origin:bottom;animation:stb-rise .55s cubic-bezier(.16,1,.3,1) both;transition:filter .2s ease}
-.stb-wrong-bar{position:absolute;left:0;bottom:calc(var(--stb-baseline) - var(--wrong-height, 0px));width:100%;min-height:0;background:var(--stb-incorrect);border-radius:0 0 4px 4px;opacity:.95;transition:height .3s ease}
-.stb-plot:after{content:none!important}
-.stb-seg{display:block;flex:0 0 auto;min-height:0;width:100%;box-sizing:border-box;transition:height .35s cubic-bezier(.2,.8,.2,1),filter .2s ease}.stb-seg:first-child{border-radius:0 0 2px 2px}.stb-seg:last-child{border-radius:4px 4px 0 0}
-.stb-col.is-active .stb-seg{filter:saturate(1.13)}
-@keyframes stb-rise{from{transform:scaleY(.04);opacity:.45}to{transform:scaleY(1);opacity:1}}
-.stb-axis{position:relative;z-index:1;display:flex;justify-content:space-between;color:var(--muted,#81798a);font-size:11px;margin-top:8px;padding:0 2px;font-variant-numeric:tabular-nums}
-.stb-legend{display:flex;gap:12px 18px;flex-wrap:wrap;margin-top:15px;color:var(--muted,#667085);font-size:12px}.stb-legend span{display:inline-flex;align-items:center;gap:7px}.stb-legend i{display:inline-block;width:9px;height:9px;border-radius:3px;flex:0 0 auto}.stb-c1{background:var(--stb-macro)}.stb-c2{background:var(--stb-micro)}.stb-c3{background:var(--stb-theory)}.stb-c4{background:var(--stb-exam)}
-.stb-tooltip{position:fixed;z-index:8;min-width:166px;max-width:220px;padding:11px 12px;background:rgba(255,255,255,.97);color:#302b3b;border:1px solid #e8e0ec;border-radius:12px;box-shadow:0 10px 28px #34234b20;font-size:12px;pointer-events:none;backdrop-filter:blur(8px);opacity:1;transform:translateY(0);transition:opacity .12s ease,transform .12s ease}.stb-tooltip[hidden]{display:none}.stb-tip-head{display:flex;justify-content:space-between;gap:12px;font-weight:650;margin-bottom:8px;align-items:baseline}.stb-tip-head b{white-space:nowrap;font-variant-numeric:tabular-nums}.stb-tip-row{display:flex;align-items:center;gap:7px;margin-top:6px;color:#777082}.stb-tip-row span{margin-right:auto}.stb-tip-row b{color:#302b3b;font-variant-numeric:tabular-nums}.stb-tip-dot{width:8px;height:8px;border-radius:2px;display:inline-block;flex:0 0 auto}
-@media(max-width:600px){.stb-plot{height:174px;gap:3px;padding:0 2px}.stb-plot:after{bottom:27px}.stb-gridlines{display:none}.stb-figure strong{font-size:24px}.stb-legend{gap:9px 13px}.stb-head h3{font-size:16px}.stb-tooltip{min-width:150px;max-width:190px}}
-@media(prefers-reduced-motion:reduce){.stb-stack{animation:none}.stb-tab,.stb-col,.stb-tooltip,.stb-seg{transition:none}}
+.stb-figure{display:flex;align-items:baseline;gap:8px;margin:14px 0 18px}
+.stb-figure strong{font-size:30px;letter-spacing:-.04em;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+.stb-unit{font-size:13px;color:var(--muted,#667085)}
+
+.stb-stage{position:relative}
+.stb-chart{--yw:34px;--ph:176px;position:relative;margin-right:10px;padding-top:4px}
+.stb-grid{position:absolute;left:0;right:0;top:4px;height:var(--ph);pointer-events:none}
+.stb-grid i{position:absolute;left:var(--yw);right:0;height:0;border-top:1px solid #efebf4}
+.stb-grid i:first-child{border-top-color:#e2dce9}
+.stb-grid b{position:absolute;left:0;width:calc(var(--yw) - 10px);transform:translateY(-50%);text-align:right;font-weight:500;font-size:11px;line-height:1;color:var(--muted,#81798a);font-variant-numeric:tabular-nums}
+.stb-plot{position:relative;z-index:1;margin-left:var(--yw);height:var(--ph);display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));column-gap:clamp(2px,.6vw,7px);touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.stb-col{position:relative;display:flex;align-items:flex-end;justify-content:center;min-width:0;height:100%;margin:0;padding:0;border:0;border-radius:0;background:none;box-shadow:none;color:inherit;font:inherit;cursor:pointer;outline:none;-webkit-tap-highlight-color:transparent}
+.stb-col::before{content:"";position:absolute;inset:-4px -2px 0;border-radius:9px;background:rgba(136,117,220,.08);box-shadow:inset 0 0 0 1.5px rgba(136,117,220,.30);opacity:0;transition:opacity .15s ease;pointer-events:none}
+.stb-col.is-active::before,.stb-col:focus-visible::before{opacity:1}
+.stb-bar{position:relative;width:100%;max-width:26px;display:flex;flex-direction:column-reverse;gap:2px;transform-origin:50% 100%;animation:stb-rise .6s cubic-bezier(.16,1,.3,1) both;transition:opacity .18s ease}
+.stb-seg{flex:none;width:100%;border-radius:3px}
+.stb-bar.is-empty{height:3px;border-radius:2px;background:#ece8f1;animation:none}
+.stb-plot.has-hover .stb-col:not(.is-active) .stb-bar{opacity:.38}
+@keyframes stb-rise{from{transform:scaleY(.02);opacity:0}to{transform:scaleY(1);opacity:1}}
+
+.stb-axis{margin-left:var(--yw);margin-top:9px;height:14px;display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));column-gap:clamp(2px,.6vw,7px)}
+.stb-axis span{display:flex;justify-content:center;min-width:0}
+.stb-axis em{font-style:normal;white-space:nowrap;font-size:11px;line-height:14px;color:var(--muted,#81798a);font-variant-numeric:tabular-nums}
+
+.stb-legend{display:flex;gap:10px 18px;flex-wrap:wrap;margin-top:18px;color:var(--muted,#667085);font-size:12px}
+.stb-legend span{display:inline-flex;align-items:center;gap:7px}
+.stb-legend i{display:inline-block;width:9px;height:9px;border-radius:3px;flex:0 0 auto}
+.stb-c1{background:var(--stb-macro)}.stb-c2{background:var(--stb-micro)}.stb-c3{background:var(--stb-theory)}.stb-c4{background:var(--stb-exam)}
+
+.stb-tooltip{position:absolute;left:0;top:0;z-index:6;width:max-content;min-width:172px;max-width:230px;padding:11px 13px 12px;background:rgba(255,255,255,.97);color:#302b3b;border:1px solid #e8e0ec;border-radius:12px;box-shadow:0 10px 28px #34234b22;font-size:12px;line-height:1.3;pointer-events:none;opacity:0;transition:transform .22s cubic-bezier(.2,.8,.2,1),opacity .14s ease}
+.stb-tooltip.on{opacity:1}
+.stb-tip-head{display:flex;justify-content:space-between;gap:14px;align-items:baseline;font-weight:650;margin-bottom:2px}
+.stb-tip-head b{white-space:nowrap;font-variant-numeric:tabular-nums}
+.stb-tip-sub{color:#8d8698;font-size:11px;margin-bottom:7px}
+.stb-tip-row{display:flex;align-items:center;gap:8px;margin-top:6px;color:#777082}
+.stb-tip-row span{margin-right:auto}
+.stb-tip-row b{color:#302b3b;font-variant-numeric:tabular-nums;font-weight:600}
+.stb-tip-row.is-wrong{margin-top:9px;padding-top:8px;border-top:1px solid #eee9f1}
+.stb-tip-dot{width:8px;height:8px;border-radius:2.5px;display:inline-block;flex:0 0 auto}
+.stb-tip-empty{color:#8d8698;margin-top:6px}
+
+@media(max-width:600px){
+ .stb-chart{--yw:28px;--ph:156px;margin-right:4px}
+ .stb-plot,.stb-axis{column-gap:2px}
+ .stb-figure strong{font-size:26px}
+ .stb-head h3{font-size:16px}
+ .stb-tooltip{min-width:156px;max-width:200px}
+}
+@media(prefers-reduced-motion:reduce){.stb-bar{animation:none}.stb-tab,.stb-col::before,.stb-bar,.stb-tooltip{transition:none}}
 </style>
 <script>
 function renderModeStackedChart(attempts,period='day'){
- const plot=document.getElementById('stb-plot'),stage=document.getElementById('stb-stage');if(!plot||!stage)return;
+ const stage=document.getElementById('stb-stage');if(!stage)return;
  const keys=['macro','micro','theory','exam'];
  const names={macro:'Макро',micro:'Микро',theory:'Теория',exam:'Экзамен'};
  const colors=['#b87898','#8c73bd','#5c9bd8','#6aaa95'];
+ const fmt=n=>Number(n).toLocaleString('ru-RU');
+ const short=d=>d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit'});
  document.querySelectorAll('#stb-controls [data-period]').forEach(b=>b.classList.toggle('is-active',b.dataset.period===period));
- const now=new Date();now.setHours(0,0,0,0);const count=period==='day'?20:12;const buckets=[];
- for(let i=count-1;i>=0;i--){let d=new Date(now);if(period==='day')d.setDate(d.getDate()-i);else{const mondayOffset=(d.getDay()+6)%7;d.setDate(d.getDate()-mondayOffset-i*7);}d.setHours(0,0,0,0);const end=new Date(d);end.setDate(end.getDate()+(period==='day'?1:7));buckets.push({key:+d,start:d,end,label:period==='day'?d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit'}):d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit'}),vals:[0,0,0,0],wrong:0,total:0});}
- (attempts||[]).filter(a=>a&&a.status==='finished').forEach(a=>{const d=new Date(a.created_at);if(Number.isNaN(+d))return;const b=buckets.find(x=>d>=x.start&&d<x.end);if(!b)return;const mode=String(a.mode||'').toLowerCase();if(!keys.includes(mode))return;const idx=keys.indexOf(mode);const q=Math.max(0,Number(a.question_count||0));const correct=Math.max(0,Math.min(q,Number(a.correct_count||0)));b.vals[idx]+=q;b.wrong+=q-correct;b.total+=q;});
- const total=buckets.reduce((n,b)=>n+b.total,0);const totalEl=document.getElementById('stb-total');if(totalEl)totalEl.textContent=total.toLocaleString('ru-RU');const sub=document.getElementById('stb-subtitle');if(sub)sub.textContent=period==='day'?'Вопросы за последние 20 дней':'Вопросы за последние 12 недель';
- const max=Math.max(1,...buckets.map(b=>b.total));const maxWrong=Math.max(1,...buckets.map(b=>b.wrong));plot.innerHTML='';plot.classList.remove('has-hover');const maxH=150;const negH=window.matchMedia('(max-width: 600px)').matches?18:22;
- buckets.forEach((b,i)=>{const col=document.createElement('button');col.type='button';col.className='stb-col';col.setAttribute('aria-label',`${b.label}: ${b.total} вопросов`);col.setAttribute('aria-describedby','stb-tip');col.style.animationDelay=`${Math.min(i*12,180)}ms`;col.style.padding='0';col.style.border='0';col.style.background='transparent';col.style.color='inherit';col.style.alignSelf='stretch';col.dataset.index=String(i);
- const stack=document.createElement('span');stack.className='stb-stack';const barHeight=b.total?Math.max(3,b.total/max*150):0;stack.style.height=`${barHeight}px`;stack.style.bottom='var(--stb-baseline)';
- b.vals.forEach((v,k)=>{if(!v)return;const seg=document.createElement('span');seg.className='stb-seg';seg.dataset.mode=keys[k];seg.style.backgroundColor=colors[k];seg.style.height=`${(v/Math.max(1,b.total))*100}%`;seg.style.flexBasis=`${(v/Math.max(1,b.total))*100}%`;seg.setAttribute('aria-label',`${names[keys[k]]}: ${v}`);stack.appendChild(seg);});col.appendChild(stack);const wrongBar=document.createElement('span');wrongBar.className='stb-wrong-bar';const wrongHeight=b.wrong?Math.max(2,b.wrong/maxWrong*negH):0;wrongBar.style.height=`${wrongHeight}px`;wrongBar.style.setProperty('--wrong-height',`${wrongHeight}px`);wrongBar.setAttribute('aria-label',`Неверные ответы: ${b.wrong}`);col.appendChild(wrongBar);if(b.total>0&&b.wrong>0){const seam=document.createElement('span');seam.className='stb-seam';seam.setAttribute('aria-hidden','true');col.appendChild(seam);}
- const enter=e=>{plot.classList.add('has-hover');showModeStackedTip(b,col,keys,names,colors,e);};
- col.addEventListener('pointerenter',enter);col.addEventListener('pointermove',e=>positionModeStackedTip(e,col));col.addEventListener('focus',()=>{plot.classList.add('has-hover');showModeStackedTip(b,col,keys,names,colors,null);});col.addEventListener('click',e=>{plot.classList.add('has-hover');showModeStackedTip(b,col,keys,names,colors,e);});col.addEventListener('pointerleave',()=>{if(document.activeElement!==col){col.classList.remove('is-active');plot.classList.remove('has-hover');const tip=document.getElementById('stb-tip');if(tip)tip.hidden=true;}});col.addEventListener('blur',()=>{col.classList.remove('is-active');plot.classList.remove('has-hover');const tip=document.getElementById('stb-tip');if(tip)tip.hidden=true;});plot.appendChild(col);});
- const axis=document.getElementById('stb-axis');if(axis){if(period==='day'){axis.innerHTML=`<span>${buckets[0].label}</span><span>${buckets[5].label}</span><span>${buckets[10].label}</span><span>${buckets[15].label}</span><span>${buckets[19].label}</span>`;}else{axis.innerHTML=`<span>${buckets[0].label}</span><span>${buckets[3].label}</span><span>${buckets[6].label}</span><span>${buckets[9].label}</span><span>${buckets[11].label}</span>`;}}
+
+ /* ── корзины: 20 дней или 12 недель ── */
+ const now=new Date();now.setHours(0,0,0,0);
+ const count=period==='day'?20:12,buckets=[];
+ for(let i=count-1;i>=0;i--){
+  const d=new Date(now);
+  if(period==='day')d.setDate(d.getDate()-i);else d.setDate(d.getDate()-((d.getDay()+6)%7)-i*7);
+  d.setHours(0,0,0,0);
+  const end=new Date(d);end.setDate(end.getDate()+(period==='day'?1:7));
+  const last=new Date(end);last.setDate(last.getDate()-1);
+  buckets.push({start:d,end,label:short(d),
+   title:period==='day'?d.toLocaleDateString('ru-RU',{weekday:'short',day:'numeric',month:'long'}):short(d)+' – '+short(last),
+   vals:[0,0,0,0],wrong:0,total:0});
+ }
+ (attempts||[]).filter(a=>a&&a.status==='finished').forEach(a=>{
+  const d=new Date(a.created_at);if(Number.isNaN(+d))return;
+  const b=buckets.find(x=>d>=x.start&&d<x.end);if(!b)return;
+  const idx=keys.indexOf(String(a.mode||'').toLowerCase());if(idx<0)return;
+  const q=Math.max(0,Number(a.question_count||0));
+  const ok=Math.max(0,Math.min(q,Number(a.correct_count||0)));
+  b.vals[idx]+=q;b.wrong+=q-ok;b.total+=q;
+ });
+ const total=buckets.reduce((n,b)=>n+b.total,0);
+ const totalEl=document.getElementById('stb-total');if(totalEl)totalEl.textContent=fmt(total);
+ const sub=document.getElementById('stb-subtitle');if(sub)sub.textContent=period==='day'?'Вопросы за последние 20 дней':'Вопросы за последние 12 недель';
+
+ /* ── «красивая» шкала Y ── */
+ const maxTotal=Math.max(1,...buckets.map(b=>b.total));
+ const mag=Math.pow(10,Math.floor(Math.log10(maxTotal/4)));
+ let step=mag;for(const m of [1,2,5,10]){step=m*mag;if(Math.ceil(maxTotal/step)<=4)break;}
+ const steps=Math.max(1,Math.ceil(maxTotal/step)),niceMax=steps*step;
+
+ const mobile=window.matchMedia('(max-width: 600px)').matches;
+ const PH=mobile?156:176,GAP=2;
+ const grid=Array.from({length:steps+1},(_,t)=>{const y=PH-t*step/niceMax*PH;return `<i style="top:${y}px"></i><b style="top:${y}px">${fmt(t*step)}</b>`;}).join('');
+ const every=period==='day'?5:3;
+ const axis=buckets.map((b,i)=>`<span>${(count-1-i)%every===0?`<em>${b.label}</em>`:''}</span>`).join('');
+ stage.innerHTML=`<div class="stb-chart" id="stb-chart"><div class="stb-grid" aria-hidden="true">${grid}</div><div class="stb-plot" id="stb-plot" style="--n:${count}" role="group" aria-label="Активность по режимам"></div><div class="stb-axis" id="stb-axis" style="--n:${count}" aria-hidden="true">${axis}</div><div class="stb-tooltip" id="stb-tip" role="status" aria-live="polite"></div></div>`;
+
+ const chart=document.getElementById('stb-chart'),plot=document.getElementById('stb-plot'),tip=document.getElementById('stb-tip');
+ const cols=[];let active=-1;
+
+ buckets.forEach((b,i)=>{
+  const col=document.createElement('button');col.type='button';col.className='stb-col';
+  col.setAttribute('aria-label',`${b.title}: ${b.total} вопросов`);
+  const bar=document.createElement('span');
+  if(!b.total){bar.className='stb-bar is-empty';}
+  else{
+   bar.className='stb-bar';bar.style.animationDelay=`${i*18}ms`;
+   const used=b.vals.filter(Boolean).length;
+   const H=Math.max(4,b.total/niceMax*PH);b.h=H;
+   const avail=Math.max(0,H-GAP*(used-1));
+   bar.style.height=H+'px';
+   b.vals.forEach((v,k)=>{if(!v)return;const s=document.createElement('span');s.className='stb-seg';s.style.background=colors[k];s.style.height=Math.max(2,v/b.total*avail)+'px';bar.appendChild(s);});
+  }
+  col.appendChild(bar);plot.appendChild(col);cols.push(col);
+ });
+
+ function place(i){
+  const b=buckets[i],c=cols[i].getBoundingClientRect(),r=chart.getBoundingClientRect();
+  const w=tip.offsetWidth,h=tip.offsetHeight,cx=c.left-r.left+c.width/2;
+  let x=cx+c.width/2+10;
+  if(x+w>r.width+8)x=cx-c.width/2-10-w;
+  x=Math.max(0,Math.min(r.width-w,x));
+  const barTop=4+PH-(b.h||3);
+  const y=Math.max(0,Math.min(PH+4-h,barTop-h/2));
+  return [x,y];
+ }
+ function show(i){
+  if(i===active)return;
+  if(active>=0)cols[active].classList.remove('is-active');
+  active=i;cols[i].classList.add('is-active');plot.classList.add('has-hover');
+  const b=buckets[i];
+  const rows=b.vals.map((v,k)=>v?`<div class="stb-tip-row"><i class="stb-tip-dot" style="background:${colors[k]}"></i><span>${names[keys[k]]}</span><b>${fmt(v)}</b></div>`:'').join('');
+  tip.innerHTML=`<div class="stb-tip-head"><span>${b.title}</span><b>${fmt(b.total)}</b></div>`+
+   (b.total?`<div class="stb-tip-sub">вопросов</div>${rows}<div class="stb-tip-row is-wrong"><i class="stb-tip-dot" style="background:var(--stb-incorrect)"></i><span>Неверно</span><b>${fmt(b.wrong)}</b></div>`:'<div class="stb-tip-empty">Нет ответов</div>');
+  const first=!tip.classList.contains('on'),[x,y]=place(i);
+  if(first){tip.style.transition='none';tip.style.transform=`translate(${x}px,${y}px)`;void tip.offsetWidth;tip.style.transition='';}
+  else tip.style.transform=`translate(${x}px,${y}px)`;
+  tip.classList.add('on');
+ }
+ function clear(){if(active>=0)cols[active].classList.remove('is-active');active=-1;plot.classList.remove('has-hover');tip.classList.remove('on');}
+ window.__stbClear=clear;
+
+ const pick=e=>{const r=plot.getBoundingClientRect();return Math.max(0,Math.min(count-1,Math.floor((e.clientX-r.left)/r.width*count)));};
+ plot.addEventListener('pointermove',e=>show(pick(e)));
+ plot.addEventListener('pointerdown',e=>show(pick(e)));
+ plot.addEventListener('pointerleave',e=>{if(e.pointerType!=='touch')clear();});
+ cols.forEach((c,i)=>{c.addEventListener('focus',()=>show(i));c.addEventListener('blur',clear);});
 }
-function showModeStackedTip(b,col,keys,names,colors,event){const tip=document.getElementById('stb-tip');if(!tip)return;document.querySelectorAll('.stb-col.is-active').forEach(x=>x.classList.remove('is-active'));col.classList.add('is-active');const total=b.vals.reduce((a,v)=>a+v,0);tip.innerHTML=`<div class="stb-tip-head"><span>${b.label}</span><b>${total.toLocaleString('ru-RU')} вопросов</b></div>`+b.vals.map((v,i)=>`<div class="stb-tip-row"><i class="stb-tip-dot" style="background:${colors[i]}"></i><span>${names[keys[i]]}</span><b>${v.toLocaleString('ru-RU')}</b></div>`).join('')+`<div class="stb-tip-row"><i class="stb-tip-dot" style="background:var(--stb-incorrect)"></i><span>Неверные ответы</span><b>${b.wrong.toLocaleString('ru-RU')}</b></div>`;tip.hidden=false;positionModeStackedTip(event,col);}
-function positionModeStackedTip(event,col){const tip=document.getElementById('stb-tip');if(!tip||tip.hidden)return;const cr=col.getBoundingClientRect();let x=event&&Number.isFinite(event.clientX)?event.clientX:cr.left+cr.width/2;let y=event&&Number.isFinite(event.clientY)?event.clientY:cr.top;const width=tip.offsetWidth||180,height=tip.offsetHeight||130;let left=x+16;if(left+width>window.innerWidth-8)left=x-width-16;left=Math.max(8,Math.min(window.innerWidth-width-8,left));let top=y-height-12;if(top<8)top=Math.min(window.innerHeight-height-8,y+16);top=Math.max(8,Math.min(window.innerHeight-height-8,top));tip.style.left=`${left}px`;tip.style.top=`${top}px`;}
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){const tip=document.getElementById('stb-tip');if(tip)tip.hidden=true;document.querySelectorAll('.stb-col.is-active').forEach(x=>x.classList.remove('is-active'));document.getElementById('stb-plot')?.classList.remove('has-hover');}});
+if(!window.__stbBound){
+ window.__stbBound=true;
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&window.__stbClear)window.__stbClear();});
+ document.addEventListener('pointerdown',e=>{if(window.__stbClear&&!e.target.closest('#stb-plot'))window.__stbClear();});
+}
 </script>
 
 <style id="stb-remove-empty-track-under-negative-bars">
