@@ -491,6 +491,24 @@ main#app{margin:0 0 0 198px;max-width:none;padding:24px 28px 42px;min-height:cal
  .context-meter-card .progress-ring-layout .ctx-chip b{font-size:12px!important}
 }
 </style>
+
+<style id="admin-turntable-edit-manager">
+.tt-edit-manager{margin:12px 0 16px;padding:14px;border:1px solid #eadfe4;border-radius:14px;background:#fffdfd}
+.tt-edit-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px;color:#252b38}
+.tt-edit-heading span{font-size:12px;color:var(--muted);font-weight:600}
+.tt-edit-list{max-height:440px;overflow:auto}
+.tt-edit-frame{grid-template-columns:58px minmax(0,1fr) auto auto;min-height:68px}
+.tt-edit-frame .tt-edit-thumb{width:58px;height:52px;padding:0!important;border:0!important;background:transparent!important;min-width:0!important;overflow:hidden;border-radius:8px}
+.tt-edit-frame .tt-edit-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.tt-edit-frame .tt-edit-thumb:hover img{transform:scale(1.06)}
+.tt-frame-changed{color:#a66a16;font-size:11px}
+.tt-frame-replace{width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;border:1px solid #eadfe4;border-radius:8px;background:#fff;cursor:pointer;font-size:17px}
+.tt-frame-replace input{display:none}
+.tt-edit-note{font-size:12px;margin:0 0 4px}
+.tt-add-frame{display:inline-flex!important;width:auto!important;align-items:center;gap:8px;padding:9px 13px;border:1px dashed #cbbbc4;border-radius:9px;cursor:pointer;color:var(--accent-dark)}
+.tt-add-frame input{display:none}
+@media(max-width:620px){.tt-edit-frame{grid-template-columns:46px minmax(0,1fr) auto}.tt-edit-frame .tt-edit-thumb{width:46px;height:46px}.tt-edit-frame>span:nth-of-type(2){display:none}.tt-edit-frame>div{grid-column:2/-1;justify-content:flex-end}}
+</style>
 </head><body>
 <header class="topbar"><div class="brand" onclick="home()"><span class="brand-mark">⚕</span><span>ТестПатан ВГМУ<small>Патологическая анатомия</small></span></div><div class="top-search"><button type="button" class="search-trigger" aria-label="Открыть поиск" title="Поиск" onclick="toggleSiteSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.2 4.2"/></svg></button><div id="searchDrop" class="search-drop" hidden></div><input id="siteSearch" placeholder="Поиск по темам, разделам, терминам…" autocomplete="off" oninput="searchSuggest(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();searchSite(this.value)}else if(event.key==='Escape')searchClose()"></div><div class="top-actions"><div class="notif-wrap"><button class="icon-action bell" id="bellBtn" title="Уведомления" aria-label="Уведомления" onclick="toggleNotifs(event)"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 1 1 12 0c0 4.6 1.6 6.2 2 6.5H4c.4-.3 2-1.9 2-6.5z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg><span class="bell-badge" id="bellBadge" hidden></span></button><div id="notifPanel" class="notif-panel" hidden></div></div><nav id="nav"></nav></div></header>
 <aside class="sidebar" id="sidebar"><div class="side-links"><button class="side-link active" data-side="home" onclick="home()"><span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11 12 3.8l8.5 7.2"/><path d="M5.5 9.8V20h13V9.8"/><path d="M10 20v-5.5h4V20"/></svg></span>Главная</button><button class="side-link" onclick="sectionsPage()"><span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 9 4.5-9 4.5-9-4.5z"/><path d="m3 12 9 4.5 9-4.5"/><path d="m3 16.5 9 4.5 9-4.5"/></svg></span>Разделы</button><button class="side-link" onclick="profile()"><span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="14" width="4" height="6.5" rx="1.2"/><rect x="10" y="9" width="4" height="11.5" rx="1.2"/><rect x="16.5" y="4" width="4" height="16.5" rx="1.2"/></svg></span>Статистика</button><button class="side-link" onclick="favoritesPage()"><span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3.5h11V21L12 16.8 6.5 21z"/></svg></span>Избранное</button><button class="side-link" onclick="materialsPage()"><span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5C10 5 7 4.5 3.5 5v13.5c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5C17 4.5 14 5 12 6.5z"/><path d="M12 6.5V20"/></svg></span>Материалы</button></div><div class="side-quote">«Патологическая анатомия — это язык, на котором организм говорит с врачом.»</div><div class="side-bottom-art" aria-hidden="true"></div></aside>
@@ -700,6 +718,61 @@ const TT_SPLEEN=['IMG_7559.jpg','IMG_7560.jpg','IMG_7561.jpg','IMG_7562.jpg','IM
 const isTurntablePath=p=>String(p||'').startsWith('360:');
 const ttNames=base=>base.startsWith('storage:')?[]:base.includes('bullez-emphysema')?TT_EMPHYSEMA:base.includes('spleen-amyloidosis')?TT_SPLEEN:TT_MACRO;
 const turntableBase=p=>String(p||'').slice(4).replace(/\\/g,'/').replace(/^\/+|\/+$/g,'');
+
+let adminTurntableEditState=null;
+async function loadAdminTurntableEdit(path){
+  const base=turntableBase(path);
+  if(!base.startsWith('storage:'))return null;
+  const setId=base.slice(8);
+  const {data,error}=await sb.from('turntable_sets').select('id,title,frame_paths').eq('id',setId).single();
+  if(error)throw error;
+  const frames=(data.frame_paths||[]).map(p=>({path:p,url:sb.storage.from('testpatan-media').getPublicUrl(p).data.publicUrl,file:null,removed:false}));
+  adminTurntableEditState={setId,title:data.title||'',frames};
+  return adminTurntableEditState;
+}
+function renderAdminTurntableEditList(){
+  const box=document.querySelector('#ttEditFrames');if(!box||!adminTurntableEditState)return;
+  const frames=adminTurntableEditState.frames;
+  box.innerHTML=frames.map((f,i)=>`<div class="tt-upload-row tt-edit-frame" data-index="${i}">
+    <button type="button" class="tt-edit-thumb" onclick="previewAdminTurntableFrame(${i})" title="Предпросмотр кадра"><img src="${esc(f.file?URL.createObjectURL(f.file):f.url)}" alt="Кадр ${i+1}"></button>
+    <span title="${esc(f.file?.name||f.path.split('/').pop())}">${esc(f.file?.name||f.path.split('/').pop())}${f.file?'<small class="tt-frame-changed"> · заменён</small>':''}</span>
+    <span class="tt-upload-status">${f.file?'Новый файл': 'Сохранён'}</span>
+    <div>
+      <button type="button" class="secondary" onclick="moveAdminTurntableFrame(${i},-1)" ${i===0?'disabled':''} aria-label="Переместить выше">↑</button>
+      <button type="button" class="secondary" onclick="moveAdminTurntableFrame(${i},1)" ${i===frames.length-1?'disabled':''} aria-label="Переместить ниже">↓</button>
+      <label class="tt-frame-replace" title="Заменить кадр">↻<input type="file" accept="image/jpeg,image/png,image/webp" onchange="replaceAdminTurntableFrame(${i},this.files[0])"></label>
+      <button type="button" class="secondary" onclick="removeAdminTurntableFrame(${i})" aria-label="Удалить кадр">×</button>
+    </div>
+  </div>`).join('');
+  const note=document.createElement('div');note.className='muted tt-edit-note';note.textContent=`Кадров: ${frames.length}. Перетаскивайте порядок стрелками; нажмите на миниатюру для увеличенного предпросмотра.`;box.prepend(note);
+}
+function addAdminTurntableFrames(files){if(!adminTurntableEditState||!files?.length)return;for(const file of files){if(!EXT[file.type]||file.size>5*1024*1024){toast(`Файл «${file.name}» не подходит (JPEG/PNG/WebP до 5 МБ)`);continue}if(adminTurntableEditState.frames.length>=120){toast('Максимум 120 кадров');break}adminTurntableEditState.frames.push({path:null,url:'',file,removed:false})}renderAdminTurntableEditList()}
+function previewAdminTurntableFrame(i){const f=adminTurntableEditState?.frames[i];if(!f)return;zoomImage(f.file?URL.createObjectURL(f.file):f.url)}
+function moveAdminTurntableFrame(i,d){const a=adminTurntableEditState?.frames;if(!a)return;const j=i+d;if(j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]];renderAdminTurntableEditList()}
+function removeAdminTurntableFrame(i){if(!adminTurntableEditState)return;adminTurntableEditState.frames.splice(i,1);renderAdminTurntableEditList()}
+function replaceAdminTurntableFrame(i,file){if(!file||!adminTurntableEditState)return;if(!EXT[file.type]||file.size>5*1024*1024){toast('Выберите JPEG, PNG или WebP до 5 МБ');return}adminTurntableEditState.frames[i].file=file;renderAdminTurntableEditList()}
+async function persistAdminTurntableEdit(){
+  const st=adminTurntableEditState;if(!st)return;
+  if(st.frames.length<2)throw new Error('Для 360°-просмотрщика необходимо оставить минимум два кадра');
+  const oldPaths=(await sb.from('turntable_sets').select('frame_paths').eq('id',st.setId).single());
+  if(oldPaths.error)throw oldPaths.error;
+  const oldSetPaths=oldPaths.data.frame_paths||[],uploaded=[],newPaths=[];
+  try{
+    for(const f of st.frames){
+      if(f.file){
+        const path=`turntables/${crypto.randomUUID()}.${EXT[f.file.type]}`;
+        const {error}=await sb.storage.from('testpatan-media').upload(path,f.file,{contentType:f.file.type,upsert:false});
+        if(error)throw error;uploaded.push(path);newPaths.push(path);
+      }else newPaths.push(f.path);
+    }
+    const {error}=await sb.from('turntable_sets').update({frame_paths:newPaths,title:st.title||oldSetPaths.title}).eq('id',st.setId);
+    if(error)throw error;
+    const removed=oldSetPaths.filter(p=>!newPaths.includes(p));
+    if(removed.length){const del=await sb.storage.from('testpatan-media').remove(removed);if(del.error)console.warn('Не удалось удалить старые кадры 360°',del.error)}
+    turntableFrameCache.delete(st.setId);
+  }catch(e){if(uploaded.length)await sb.storage.from('testpatan-media').remove(uploaded);throw e}
+}
+
 const turntableFrameCache=new Map();
 async function turntableFrames(base){if(!base.startsWith('storage:'))return ttNames(base).map(n=>base+'/'+n);const id=base.slice(8);if(turntableFrameCache.has(id))return turntableFrameCache.get(id);const {data,error}=await sb.from('turntable_sets').select('frame_paths').eq('id',id).single();if(error)throw error;const urls=(data.frame_paths||[]).map(p=>sb.storage.from('testpatan-media').getPublicUrl(p).data.publicUrl);turntableFrameCache.set(id,urls);return urls;}
 function turntableHtml(path){const base=turntableBase(path),first=base.startsWith('storage:')?'':base+'/'+ttNames(base)[0];return `<div class="turntable-shell" data-tt-base="${esc(base)}"><div class="turntable-card" tabindex="0" aria-label="360° просмотр макропрепарата"><img class="tt-image" src="${esc(first)}" alt="Макропрепарат" draggable="false"><div class="tt-toolbar" role="toolbar" aria-label="Управление просмотром"><button type="button" class="tt-zoom-out" title="Уменьшить" aria-label="Уменьшить">−</button><span class="tt-zoom-value" aria-live="polite">100%</span><button type="button" class="tt-zoom-in" title="Увеличить" aria-label="Увеличить">+</button><button type="button" class="tt-reset" title="Сбросить вид" aria-label="Сбросить вид">⟲</button><button type="button" class="tt-pan" title="Перемещать изображение" aria-label="Включить перемещение" aria-pressed="false"><svg class="tt-hand-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7.2 11.2V5.8a1.35 1.35 0 0 1 2.7 0v4.1-5.7a1.35 1.35 0 0 1 2.7 0v5.7-5a1.35 1.35 0 0 1 2.7 0v5.4-3.4a1.35 1.35 0 0 1 2.7 0v6.3c0 4.1-2.6 6.8-6.4 6.8-2.6 0-4.1-1.1-5.2-2.5l-2.2-2.8a1.4 1.4 0 0 1 2.2-1.7l.8 1V11.2Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button><span class="tt-separator" aria-hidden="true"></span><button type="button" class="tt-play" title="Автоповорот" aria-label="Включить автоповорот" aria-pressed="false">▶</button><button type="button" class="tt-full" title="На весь экран" aria-label="На весь экран">⛶</button></div><div class="tt-help">Перетащите влево или вправо, чтобы осмотреть препарат</div></div></div>`}
@@ -1226,15 +1299,17 @@ function addQBlock(){const box=$('#qblocks'),n=box.querySelectorAll('.qblock').l
 function removeQBlock(btn){const el=btn.closest('.qblock');el.classList.add('qb-out');setTimeout(()=>{el.remove();renumberQBlocks()},220)}
 async function editQ(id,mark=true){if(mark)markRoute('edit'+(id?'/'+id:''));
   let q={section:'macro',topic_id:topics[0]?.id,prompt:'',is_exam:false,is_published:false,image_path:null},opts=[],key=null,expl='';
+  adminTurntableEditState=null;
   if(id){
     q=(await sb.from('questions').select('*').eq('id',id).single()).data;
     opts=(await sb.from('question_options').select('*').eq('question_id',id).order('sort_order')).data||[];
     const k=(await sb.from('question_answers').select('*').eq('question_id',id).maybeSingle()).data;key=k?.correct_option_id;expl=k?.explanation||'';
+    if(q?.image_path&&isTurntablePath(q.image_path)&&turntableBase(q.image_path).startsWith('storage:')){try{await loadAdminTurntableEdit(q.image_path)}catch(e){console.error('Не удалось загрузить кадры для редактирования',e);}}
   }
   app.innerHTML=`<div class="panel"><h2>${id?'Редактирование':'Новый вопрос'}</h2><div id="e"></div>
 <label>Режим</label><select id="s">${['macro','micro','theory'].map(s=>`<option value="${s}" ${s===q.section?'selected':''}>${MODES[s][1]}</option>`).join('')}</select>
 <label>Тема</label><select id="t">${[...topics].sort((a,b)=>({general:0,specific:1}[a.block]-{general:0,specific:1}[b.block])||a.sort_order-b.sort_order||a.title.localeCompare(b.title,'ru')).map(t=>`<option value="${t.id}" ${t.id===q.topic_id?'selected':''}>${BLOCKS[t.block]}: ${esc(t.title)}</option>`).join('')}</select>
-<label>Фото (JPEG/PNG/WebP до 5 МБ)</label>${q.image_path&&!isTurntablePath(q.image_path)?`${adminMediaPreview(q.image_path)}<label><input type="checkbox" id="rmimg"> Удалить фото</label>`:q.image_path&&isTurntablePath(q.image_path)?`${adminMediaPreview(q.image_path)}<label><input type="checkbox" id="rmimg"> Удалить 360° просмотрщик</label>`:''}<input id="img" type="file" accept="image/jpeg,image/png,image/webp">
+<label>Фото (JPEG/PNG/WebP до 5 МБ)</label>${q.image_path&&!isTurntablePath(q.image_path)?`${adminMediaPreview(q.image_path)}<label><input type="checkbox" id="rmimg"> Удалить фото</label>`:q.image_path&&isTurntablePath(q.image_path)?(adminTurntableEditState?`<div class="tt-edit-manager"><div class="tt-edit-heading"><strong>Кадры 360°-просмотрщика</strong><span>${adminTurntableEditState.frames.length} шт.</span></div><div id="ttEditFrames" class="tt-upload-list tt-edit-list"></div><label class="tt-add-frame">＋ Добавить кадры<input type="file" accept="image/jpeg,image/png,image/webp" multiple onchange="addAdminTurntableFrames(this.files)"></label></div><label><input type="checkbox" id="rmimg"> Удалить 360° просмотрщик</label>`:`${adminMediaPreview(q.image_path)}<p class="muted">Не удалось загрузить список кадров. Обновите страницу и попробуйте снова.</p><label><input type="checkbox" id="rmimg"> Удалить 360° просмотрщик</label>`):''}<input id="img" type="file" accept="image/jpeg,image/png,image/webp">
 <label><input type="checkbox" id="is360" ${isTurntablePath(q.image_path)?'checked':''}> Это 360°-просмотрщик</label>
 <input id="ttpath" value="${esc(isTurntablePath(q.image_path)?turntableBase(q.image_path):'/assets/exam/macro-03484') }" placeholder="Папка с кадрами, например /assets/exam/macro-03484">
 <p class="tt-folder-note">Кадры должны называться IMG_7327.jpg … IMG_7359.jpg; сейчас подключены 31 кадр макропрепарата 03484.</p>
@@ -1244,6 +1319,7 @@ async function editQ(id,mark=true){if(mark)markRoute('edit'+(id?'/'+id:''));
 <label><input type="checkbox" id="is_exam" ${q.is_exam?'checked':''}> Включить в экзамен (только режим «Макро»)</label>
 <label><input type="checkbox" id="pb" ${q.is_published?'checked':''}> Опубликовать</label>
 <div class="row"><button onclick="saveQ('${id||''}')">Сохранить</button><button class="secondary" onclick="admin()">Отмена</button>${id?`<button class="danger" onclick="delQ('${id}')">Удалить</button>`:''}</div></div>`;
+  if(adminTurntableEditState)renderAdminTurntableEditList();
   initAdminTurntablePreview();
 }
 async function saveQ(id){
@@ -1271,6 +1347,7 @@ async function saveQ(id){
       if(pubd){const u=await sb.from('questions').update({is_published:true}).eq('id',qid);if(u.error)throw u.error}
       return qid};
     id=await saveOne(id||null,blocks[0],true); // у первого вопроса фото меняется только при замене/удалении
+    if(adminTurntableEditState&&$('#is360')?.checked&&!rm)await persistAdminTurntableEdit();
     for(const bk of blocks.slice(1))await saveOne(null,bk,false);
     if((f||rm)&&old){const used=await sb.from('questions').select('id',{count:'exact',head:true}).eq('image_path',old);if(!used.error&&!used.count)await sb.storage.from('testpatan-media').remove([old])} // общее фото удаляем, только если его больше не использует ни один вопрос
     if(blocks.length>1)toast(`Сохранено вопросов: ${blocks.length}`);
