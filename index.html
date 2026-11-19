@@ -510,7 +510,7 @@ main#app{margin:0 0 0 198px;max-width:none;padding:24px 28px 42px;min-height:cal
 @media(max-width:620px){.tt-edit-frame{grid-template-columns:46px minmax(0,1fr) auto}.tt-edit-frame .tt-edit-thumb{width:46px;height:46px}.tt-edit-frame>span:nth-of-type(2){display:none}.tt-edit-frame>div{grid-column:2/-1;justify-content:flex-end}}
 </style>
 
-<style id="frosted-folders-and-turntable-admin-v2">
+<style id="turntable-admin-enhancements">
 /* Smooth drag sorting, right-side grab handle */
 .tt-edit-list{max-height:500px;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin}
 .tt-edit-frame{grid-template-columns:58px minmax(0,1fr) auto auto;min-height:70px;transition:transform .22s cubic-bezier(.22,1,.36,1),box-shadow .22s,background .22s;will-change:transform}
@@ -538,36 +538,34 @@ main#app{margin:0 0 0 198px;max-width:none;padding:24px 28px 42px;min-height:cal
 @media(prefers-reduced-motion:reduce){.tt-edit-frame,.tt-admin-rail{transition:none!important;scroll-behavior:auto!important}}
 </style>
 
-<style id="section-folders-navigation">
-.section-folders{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;align-items:start;margin:18px 0 12px}
-.section-folder{--folder-color:#f4e5e8;position:relative;min-width:0;border:1px solid color-mix(in srgb,var(--folder-color) 72%,#b7a5ad);border-radius:17px;background:linear-gradient(145deg,#fff 0%,var(--folder-color) 100%);box-shadow:0 7px 20px #3b33420b,inset 0 1px #fff;overflow:visible;transition:transform .42s cubic-bezier(.22,1,.36,1),box-shadow .35s}
-.section-folder:before{content:"";position:absolute;z-index:0;left:16px;top:-10px;width:38%;height:17px;border:1px solid color-mix(in srgb,var(--folder-color) 70%,#b7a5ad);border-bottom:0;border-radius:9px 9px 0 0;background:linear-gradient(180deg,#fff,var(--folder-color))}
-.section-folder__cover{position:relative;z-index:1;width:100%;min-height:150px;display:flex;align-items:center;gap:15px;padding:24px 22px 20px;border:0;border-radius:16px;background:transparent;color:#202b40;text-align:left;cursor:pointer;box-shadow:none;transition:transform .42s cubic-bezier(.22,1,.36,1),filter .3s}
-.section-folder__cover:hover{filter:brightness(.985)}
-.section-folder__cover-icon{width:52px;height:43px;display:grid;place-items:center;flex:0 0 52px;border:1px solid #ffffffc9;border-radius:11px;background:#ffffff85;color:#8d6378;font-size:25px;box-shadow:0 3px 9px #493b4510}
-.section-folder__cover-copy{display:flex;flex:1;min-width:0;flex-direction:column;gap:6px}
-.section-folder__cover-copy strong{font:700 24px/1.1 "NumSerif",Georgia,serif}
-.section-folder__cover-copy small{font:12px/1.4 Inter,system-ui,sans-serif;color:#687184}
-.section-folder__chevron{font-size:24px;color:#8b5d78;transition:transform .4s cubic-bezier(.22,1,.36,1)}
-.section-folder.is-open{z-index:2;box-shadow:0 12px 26px #3b334218,inset 0 1px #fff}
-.section-folder.is-open .section-folder__cover{transform:translateY(10px)}
-.section-folder.is-open .section-folder__chevron{transform:rotate(180deg)}
-.section-folder__reveal{display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows .42s cubic-bezier(.22,1,.36,1),opacity .28s ease}
-.section-folder.is-open .section-folder__reveal{grid-template-rows:1fr;opacity:1}
-.section-folder__reveal-inner{min-height:0;overflow:hidden}
-.section-folder__topics{padding:8px 13px 14px}
-.section-folder__topic{display:flex;align-items:center;gap:8px;min-width:0;padding:0 9px;border-top:1px solid #ffffffb8}.section-folder.is-open .section-folder__topic{animation:sectionTopicIn .34s both;animation-delay:var(--topic-delay,0ms)}
-.section-folder__topic-open{flex:1;min-width:0;padding:12px 0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;color:#273247!important;text-align:left!important;white-space:normal;font:500 13px/1.45 Inter,system-ui,sans-serif}
-.section-folder__topic-open:hover{color:#a35e7c!important}
-.section-folder__topic-open strong{font-weight:550}
-.section-folder__empty{padding:8px 9px;font-size:13px}
-.section-folders-heading{margin-bottom:8px}
-.section-folders-heading .muted{margin:5px 0 0 14px;font-size:13px}
-.section-folders-back{margin-top:12px}
-@keyframes sectionTopicIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-@media(max-width:760px){.section-folders{gap:13px}.section-folder__cover{min-height:125px;padding:20px 15px;gap:10px}.section-folder__cover-icon{width:42px;height:38px;flex-basis:42px}.section-folder__cover-copy strong{font-size:20px}.section-folder__topics{padding:6px 9px 11px}}
-@media(max-width:480px){.section-folders{grid-template-columns:1fr;gap:17px}.section-folder__cover{min-height:105px}.section-folder__cover-copy strong{font-size:22px}.section-folder__topic-open{font-size:13px}}
-@media(prefers-reduced-motion:reduce){.section-folder,.section-folder__cover,.section-folder__chevron,.section-folder__reveal{transition:none!important}.section-folder__topic{animation:none!important}}
+<style id="section-folder-navigation">
+.section-folder-page{--folder-ink:#202b40;--folder-accent:#a35e7c;max-width:1180px;margin:0 auto}
+.section-folder-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin:8px 0 22px}
+.section-folder-heading h2{margin:5px 0 0;color:var(--folder-ink);font:700 clamp(23px,3vw,31px)/1.15 "NumSerif",Georgia,serif}
+.section-folders{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;align-items:start}
+.section-folder{min-width:0;border-radius:17px;position:relative}
+.section-folder__tab{position:relative;isolation:isolate;display:flex!important;flex-direction:column;align-items:flex-start;justify-content:flex-end;gap:9px;width:100%;min-height:164px;padding:24px 23px 19px!important;overflow:visible!important;text-align:left!important;color:#202b40!important;background:linear-gradient(145deg,color-mix(in srgb,var(--folder-color) 68%,white),var(--folder-color))!important;border:1px solid #fff!important;border-radius:15px 15px 13px 13px!important;box-shadow:0 9px 22px #30364a0c,inset 0 1px #fff!important;cursor:pointer;transform:translateY(0);transition:transform .42s cubic-bezier(.22,1,.36,1),box-shadow .35s,background .35s!important}
+.section-folder__tab:before{content:"";position:absolute;z-index:0;left:0;top:-13px;width:39%;height:27px;border:1px solid #fff;border-bottom:0;border-radius:10px 10px 0 0;background:linear-gradient(145deg,#fff,var(--folder-color));clip-path:polygon(0 0,100% 0,91% 100%,0 100%)}
+.section-folder__tab-shape{position:absolute;inset:8px 8px auto auto;width:45px;height:45px;border-radius:50%;background:#ffffff66;box-shadow:inset 0 1px #fff;opacity:.75}
+.section-folder__name{position:relative;z-index:1;font:700 clamp(23px,2.4vw,30px)/1.1 "NumSerif",Georgia,serif;letter-spacing:.01em}
+.section-folder__meta{position:relative;z-index:1;font-size:12px;color:#596174}
+.section-folder__indicator{position:absolute;right:20px;bottom:19px;display:grid;place-items:center;width:29px;height:29px;border:1px solid #ffffffb5;border-radius:50%;background:#ffffff66;font-size:18px;transition:transform .35s cubic-bezier(.22,1,.36,1),background .3s}
+.section-folder__tab:hover{transform:translateY(-3px);box-shadow:0 13px 25px #30364a16,inset 0 1px #fff!important}
+.section-folder.is-open .section-folder__tab{transform:translateY(9px);box-shadow:0 7px 17px #30364a0d,inset 0 1px #fff!important;border-radius:15px 15px 8px 8px!important}
+.section-folder.is-open .section-folder__indicator{transform:rotate(180deg);background:#fff9}
+.section-folder__content{display:grid;grid-template-rows:0fr;opacity:0;transform:translateY(-5px);transition:grid-template-rows .42s cubic-bezier(.22,1,.36,1),opacity .28s ease,transform .42s cubic-bezier(.22,1,.36,1);will-change:grid-template-rows}
+.section-folder.is-open .section-folder__content{grid-template-rows:1fr;opacity:1;transform:translateY(0)}
+.section-folder__inner{min-height:0;overflow:hidden}
+.section-folder__topics{display:grid;gap:7px;padding:22px 3px 4px}
+.section-folder__topic{min-width:0;margin:0!important;padding:7px 12px!important;border-radius:9px!important;background:#fff!important;border:1px solid #ece9e8!important;box-shadow:0 2px 8px #27304408!important;opacity:0;transform:translateY(8px);transition:opacity .28s ease,transform .36s cubic-bezier(.22,1,.36,1),border-color .2s,box-shadow .2s;transition-delay:0ms}
+.section-folder.is-open .section-folder__topic{opacity:1;transform:translateY(0);transition-delay:calc(var(--topic-index,0)*38ms)}
+.section-folder__topic:hover{border-color:#d9c4ce!important;box-shadow:0 4px 12px #2730440c!important}
+.section-folder__topic .topic-open-button{min-width:0;overflow-wrap:anywhere}
+.section-folder__topic .topic-open-button strong{font-size:13px;font-weight:600;line-height:1.4}
+.section-folder__empty{padding:18px;background:#fff;border-radius:10px}
+@media(max-width:600px){.section-folder-heading{align-items:flex-start;flex-direction:column;margin-bottom:18px}.section-folder-heading>.secondary{align-self:flex-start}.section-folders{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.section-folder__tab{min-height:135px;padding:19px 13px 15px!important}.section-folder__name{font-size:clamp(19px,5vw,24px)}.section-folder__meta{font-size:10px}.section-folder__indicator{right:11px;bottom:12px;width:25px;height:25px}.section-folder__topics{padding:19px 0 2px;gap:6px}.section-folder__topic{padding:6px 8px!important}.section-folder__topic .topic-open-button strong{font-size:12px}}
+@media(max-width:370px){.section-folders{grid-template-columns:1fr;gap:20px}.section-folder__tab{min-height:125px}}
+@media(prefers-reduced-motion:reduce){.section-folder__tab,.section-folder__indicator,.section-folder__content,.section-folder__topic{transition:none!important;transform:none!important}.section-folder__content{grid-template-rows:1fr}.section-folder:not(.is-open) .section-folder__content{display:none}.section-folder__topic{opacity:1!important;transition-delay:0ms!important}}
 </style>
 </head><body>
 <header class="topbar"><div class="brand" onclick="home()"><span class="brand-mark">⚕</span><span>ТестПатан ВГМУ<small>Патологическая анатомия</small></span></div><div class="top-search"><button type="button" class="search-trigger" aria-label="Открыть поиск" title="Поиск" onclick="toggleSiteSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.2 4.2"/></svg></button><div id="searchDrop" class="search-drop" hidden></div><input id="siteSearch" placeholder="Поиск по темам, разделам, терминам…" autocomplete="off" oninput="searchSuggest(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();searchSite(this.value)}else if(event.key==='Escape')searchClose()"></div><div class="top-actions"><div class="notif-wrap"><button class="icon-action bell" id="bellBtn" title="Уведомления" aria-label="Уведомления" onclick="toggleNotifs(event)"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 1 1 12 0c0 4.6 1.6 6.2 2 6.5H4c.4-.3 2-1.9 2-6.5z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg><span class="bell-badge" id="bellBadge" hidden></span></button><div id="notifPanel" class="notif-panel" hidden></div></div><nav id="nav"></nav></div></header>
@@ -737,51 +735,53 @@ async function searchSite(v){const q=String(v||'').trim();searchClose();if(!q)re
    +(matErr?'<p class="muted">Материалы сейчас недоступны для поиска.</p>':'')}
 
 function needLogin(){if(!me){authPage();return true}return false}
+const activeFolder={macro:null,micro:null,theory:null};
 function pick(mode,mark=true){
   if(mark)markRoute('mode/'+mode);
   if(mode==='marathon'){app.innerHTML=`<div class="eyebrow">ДЛИТЕЛЬНАЯ ПРАКТИКА</div><h2>Марафон: выберите режим</h2><p class="muted">В тест попадут все доступные задания выбранного режима из всех тем. Порядок заданий будет перемешан.</p><div class="dashboard-modes">${[['macro','Макро','asset-liver.png','mode-macro'],['micro','Микро','asset-microscope.png','mode-micro'],['theory','Теория','asset-book.png','mode-theory']].map(x=>`<button class="dash-mode ${x[3]}" onclick="startMarathon('${x[0]}')"><div class="mode-art"><img src="${assetData[x[2]]||''}" alt=""></div><div class="mode-meta"><strong>${x[1]}</strong><small>Все задания из всех тем</small></div><span class="mode-arrow">→</span></button>`).join('')}</div><button class="secondary" onclick="home()">На главную</button>`;return}
   if(mode==='exam')return start('exam',null);
-  if(!['macro','micro','theory'].includes(mode))return home();
-  renderSectionFolders(mode,null);
+  if(!['macro','micro','theory'].includes(mode))return;
+  activeFolder[mode]=null;
+  const labels={specific:'Частная',general:'Общая'};
+  const palette={macro:{specific:'#f4e5e8',general:'#efdcdf'},micro:{specific:'#e9e7f8',general:'#e1e6f5'},theory:{specific:'#e6eff8',general:'#e0e9f0'}};
+  app.innerHTML=`<div class="section-folder-page" data-section="${mode}">
+    <div class="section-folder-heading"><div><div class="eyebrow">${esc(MODES[mode][1]).toUpperCase()}</div><h2>${esc(MODES[mode][1])}: выберите папку</h2></div><button class="secondary" onclick="home()">На главную</button></div>
+    <div class="section-folders">
+      ${['specific','general'].map(block=>{
+        const count=topics.filter(t=>t.block===block).length;
+        return `<section class="section-folder section-folder--${block==='specific'?'private':'general'}" data-block="${block}" style="--folder-color:${palette[mode][block]}">
+          <button type="button" class="section-folder__tab" aria-expanded="false" onclick="toggleSectionFolder('${mode}','${block}',this)">
+            <span class="section-folder__tab-shape" aria-hidden="true"></span><span class="section-folder__name">${labels[block]}</span>
+            <span class="section-folder__meta">${count} ${count===1?'тема':count%10>=2&&count%10<=4&&!(count%100>=12&&count%100<=14)?'темы':'тем'}</span><span class="section-folder__indicator" aria-hidden="true">⌄</span>
+          </button>
+          <div class="section-folder__content" aria-hidden="true"><div class="section-folder__inner">
+            <div class="section-folder__topics">${topics.filter(t=>t.block===block).sort((a,b)=>a.sort_order-b.sort_order||a.title.localeCompare(b.title,'ru')).map((t,i)=>{
+              const locked=isTopicLocked(t,mode);
+              return `<div class="item topic-item section-folder__topic ${locked&&!isAdmin?'topic-item-locked':''}" style="--topic-index:${i};display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left"><button type="button" class="topic-open-button" style="flex:1;text-align:left;background:transparent;color:inherit;border:0;padding:8px 0;box-shadow:none" onclick="openTopicFromList('${mode}',${t.id})"><strong>${esc(t.title)}</strong></button>${topicLockControl(t,mode)}</div>`;
+            }).join('')||'<div class="muted section-folder__empty">В этой папке пока нет тем.</div>'}</div>
+          </div></div>
+        </section>`;
+      }).join('')}
+    </div>
+  </div>`;
 }
-function renderSectionFolders(mode,initialBlock){
-  const folders=[{key:'specific',label:'Частная',tint:{macro:'#f4e5e8',micro:'#e9e7f8',theory:'#e6eff8'}[mode]},
-    {key:'general',label:'Общая',tint:{macro:'#efdcdf',micro:'#e2e0f2',theory:'#dce7f0'}[mode]}];
-  const topicRows=b=>topics.filter(t=>t.block===b).sort((x,y)=>(x.sort_order-y.sort_order)||x.title.localeCompare(y.title,'ru')).map((t,i)=>{
-    const locked=isTopicLocked(t,mode);
-    return `<div class="section-folder__topic ${locked&&!isAdmin?'topic-item-locked':''}" style="--topic-delay:${Math.min(i,18)*38}ms"><button type="button" class="section-folder__topic-open" onclick="openTopicFromList('${mode}',${t.id})"><strong>${esc(t.title)}</strong></button>${topicLockControl(t,mode)}</div>`;
-  }).join('');
-  app.innerHTML=`<div class="section-heading section-folders-heading"><h2><span></span>${MODES[mode][1]}</h2><p class="muted">Выберите раздел патологии</p></div>
-    <div class="section-folders" data-mode="${mode}">${folders.map(f=>{
-      const count=topics.filter(t=>t.block===f.key).length;
-      const opened=initialBlock===f.key;
-      return `<section class="section-folder section-folder--${f.key} ${opened?'is-open':''}" style="--folder-color:${f.tint}" data-folder="${f.key}">
-        <button type="button" class="section-folder__cover" aria-expanded="${opened}" onclick="toggleSectionFolder('${mode}','${f.key}')">
-          <span class="section-folder__tab"></span><span class="section-folder__cover-icon" aria-hidden="true">▤</span>
-          <span class="section-folder__cover-copy"><strong>${f.label}</strong><small>${count} ${count===1?'тема':count>1&&count<5?'темы':'тем'}</small></span>
-          <span class="section-folder__chevron" aria-hidden="true">⌄</span>
-        </button>
-        <div class="section-folder__reveal" aria-hidden="${!opened}"><div class="section-folder__reveal-inner"><div class="section-folder__topics">${topicRows(f.key)||'<p class="muted section-folder__empty">В этой папке пока нет тем.</p>'}</div></div></div>
-      </section>`;
-    }).join('')}</div><button class="secondary section-folders-back" onclick="home()">Назад</button>`;
-}
-function toggleSectionFolder(mode,block){
-  const root=document.querySelector('.section-folders[data-mode="'+mode+'"]');if(!root)return;
-  const current=root.querySelector('.section-folder.is-open');
-  const next=current?.dataset.folder===block?null:block;
-  root.querySelectorAll('.section-folder').forEach(folder=>{
-    const open=folder.dataset.folder===next;
+function toggleSectionFolder(mode,block,button){
+  if(!Object.prototype.hasOwnProperty.call(activeFolder,mode))return;
+  const next=activeFolder[mode]===block?null:block;
+  activeFolder[mode]=next;
+  const page=app.querySelector('.section-folder-page');
+  if(!page)return;
+  page.querySelectorAll('.section-folder').forEach(folder=>{
+    const open=folder.dataset.block===next;
     folder.classList.toggle('is-open',open);
-    const button=folder.querySelector('.section-folder__cover');
-    const reveal=folder.querySelector('.section-folder__reveal');
-    button?.setAttribute('aria-expanded',String(open));
-    reveal?.setAttribute('aria-hidden',String(!open));
+    const trigger=folder.querySelector('.section-folder__tab');
+    const content=folder.querySelector('.section-folder__content');
+    trigger.setAttribute('aria-expanded',String(open));
+    content.setAttribute('aria-hidden',String(!open));
   });
 }
-function pickTopic(mode,b,mark=true){
-  if(mark)markRoute('topic/'+mode+'/'+b);
-  if(['general','specific'].includes(b))return renderSectionFolders(mode,b);
-  renderSectionFolders(mode,null);
+function pickTopic(mode,b,mark=true){if(mark)markRoute('topic/'+mode+'/'+b);
+  app.innerHTML=`<h2>${MODES[mode][1]} · ${BLOCKS[b]}</h2><div class="grid">`+topics.filter(t=>t.block===b).sort((a,b)=>a.sort_order-b.sort_order||a.title.localeCompare(b.title,'ru')).map(t=>{const locked=isTopicLocked(t,mode);return `<div class="item topic-item ${locked&&!isAdmin?'topic-item-locked':''}" style="display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left"><button type="button" class="topic-open-button" style="flex:1;text-align:left;background:transparent;color:inherit;border:0;padding:8px 0;box-shadow:none" onclick="openTopicFromList('${mode}',${t.id})"><strong>${esc(t.title)}</strong></button>${topicLockControl(t,mode)}</div>`}).join('')+`</div><button class="secondary" onclick="pick('${mode}')">Назад</button>`;
 }
 function openTopicFromList(mode,id){const t=topics.find(x=>String(x.id)===String(id));if(!t)return;if(isTopicLocked(t,mode)&&!isAdmin){toast('Эта тема временно закрыта в режиме '+MODES[mode][1]+'.');return}start(mode,id)}
 async function startMarathon(mode){return start(mode,null,true)}
