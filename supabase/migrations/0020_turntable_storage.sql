@@ -12,18 +12,37 @@ create table if not exists public.turntable_sets (
 );
 
 alter table public.turntable_sets enable row level security;
+
 drop policy if exists "published turntables readable" on public.turntable_sets;
 create policy "published turntables readable" on public.turntable_sets
   for select using (true);
+
 drop policy if exists "admin manage turntables" on public.turntable_sets;
 create policy "admin manage turntables" on public.turntable_sets
-  for all using (public.is_admin()) with check (public.is_admin());
+  for all to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
+
 grant select on public.turntable_sets to anon, authenticated;
 grant insert, update, delete on public.turntable_sets to authenticated;
 
 drop policy if exists "admin upload turntable frames" on storage.objects;
 create policy "admin upload turntable frames" on storage.objects
   for insert to authenticated
+  with check (
+    bucket_id = 'testpatan-media'
+    and (storage.foldername(name))[1] = 'turntables'
+    and public.is_admin()
+  );
+
+drop policy if exists "admin update turntable frames" on storage.objects;
+create policy "admin update turntable frames" on storage.objects
+  for update to authenticated
+  using (
+    bucket_id = 'testpatan-media'
+    and (storage.foldername(name))[1] = 'turntables'
+    and public.is_admin()
+  )
   with check (
     bucket_id = 'testpatan-media'
     and (storage.foldername(name))[1] = 'turntables'
