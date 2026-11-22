@@ -825,7 +825,7 @@ function pick(mode,mark=true){
   app.innerHTML=`<div class="section-folder-page" data-section="${mode}">
     <div class="section-folder-heading"><div><div class="eyebrow">${esc(MODES[mode][1]).toUpperCase()}</div><h2>${esc(MODES[mode][1])}: выберите папку</h2></div><button class="secondary" onclick="home()">На главную</button></div>
     <div class="section-folders">
-      ${['specific','general'].map(block=>{
+      ${['general','specific'].map(block=>{
         const count=topics.filter(t=>t.block===block).length;
         return `<section class="section-folder section-folder--${block==='specific'?'private':'general'}" data-block="${block}" style="--folder-color:${palette[mode][block]}">
           <button type="button" class="section-folder__tab" aria-expanded="false" onclick="toggleSectionFolder('${mode}','${block}',this)">
@@ -914,9 +914,7 @@ function renderAdminTurntableEditList(){
     <span title="${esc(f.file?.name||f.path?.split('/').pop()||'Новый кадр')}">${esc(f.file?.name||f.path?.split('/').pop()||'Новый кадр')}</span>
     <span class="tt-upload-status ${f.uploading?'is-uploading':f.uploadError?'is-error':''}">${f.uploading?'Загрузка…':f.uploadError?'Ошибка загрузки':f.file?(f.path?'Загружен':'Ожидает загрузки'):'На сайте'}</span>
     <div class="tt-frame-actions">
-      <button type="button" class="secondary tt-order-btn" onclick="moveAdminTurntableFrame(${i},-1)" ${i===0?'disabled':''} title="Переместить выше" aria-label="Переместить выше">↑</button>
       <button type="button" class="tt-drag-handle" title="Зажмите и перетаскивайте" aria-label="Перетащить кадр">⠿</button>
-      <button type="button" class="secondary tt-order-btn" onclick="moveAdminTurntableFrame(${i},1)" ${i===frames.length-1?'disabled':''} title="Переместить ниже" aria-label="Переместить ниже">↓</button>
       <label class="tt-frame-replace" title="Заменить кадр">↻<input type="file" accept="image/jpeg,image/png,image/webp" onchange="replaceAdminTurntableFrame(${i},this.files[0])"></label>
       <button type="button" class="secondary" onclick="removeAdminTurntableFrame(${i})" aria-label="Удалить кадр">×</button>
     </div>
@@ -981,8 +979,19 @@ function initAdminTurntableReorder(box){
     if(e.clientY<rect.top+42)box.scrollBy({top:-Math.max(6,(rect.top+42-e.clientY)*.25),behavior:'auto'});
     else if(e.clientY>rect.bottom-42)box.scrollBy({top:Math.max(6,(e.clientY-(rect.bottom-42))*.25),behavior:'auto'});
     const rows=[...box.querySelectorAll('.tt-edit-frame:not(.is-dragging)')];
+    const before=new Map([...box.querySelectorAll('.tt-edit-frame')].map(row=>[row,row.getBoundingClientRect()]));
     const target=rows.find(row=>{const r=row.getBoundingClientRect();return e.clientY<r.top+r.height/2});
-    if(target)box.insertBefore(active,target);else if(rows.length)box.appendChild(active);
+    const oldNext=active.nextElementSibling;
+    if(target&&target!==oldNext)box.insertBefore(active,target);
+    else if(!target&&rows.length&&active!==box.lastElementChild)box.appendChild(active);
+    const moved=[...box.querySelectorAll('.tt-edit-frame:not(.is-dragging)')];
+    moved.forEach(row=>{
+      const first=before.get(row);if(!first)return;
+      const last=row.getBoundingClientRect(),dy=first.top-last.top;
+      if(Math.abs(dy)<1)return;
+      row.style.transition='none';row.style.transform=`translateY(${dy}px)`;
+      requestAnimationFrame(()=>{row.style.transition='transform 220ms cubic-bezier(.2,.75,.25,1)';row.style.transform='';});
+    });
   };
   const onUp=e=>{if(active&&(e.pointerId==null||e.pointerId===pointerId))finish()};
   box.addEventListener('pointerdown',e=>{
@@ -1241,13 +1250,20 @@ function macroTopicChoices(handler){
   }).join('');
 }
 function toggleTurntableTopicPicker(){const box=$('#ttTopicPicker');if(!box)return;box.hidden=!box.hidden;if(!box.hidden)box.scrollIntoView({behavior:'smooth',block:'nearest'})}
+function selectCreateMacroTopic(id){
+  const topic=topics.find(t=>String(t.id)===String(id)&&['general','specific'].includes(t.block));
+  if(!topic)return;
+  const input=$('#ttCreateTopicId');if(input)input.value=String(topic.id);
+  const note=$('#ttCreateTopicSelected');if(note)note.textContent=`Будет добавлено в режим «Макро»: ${BLOCKS[topic.block]} · ${topic.title}`;
+  const picker=$('#ttTopicPicker');if(picker)picker.hidden=true;
+}
 function selectEditMacroTopic(id){const topic=topics.find(t=>String(t.id)===String(id)&&['general','specific'].includes(t.block));if(!topic)return;const select=$('#t');if(select)select.value=String(topic.id);const note=$('#editMacroTopicSelected');if(note)note.textContent=`Выбрана тема: ${BLOCKS[topic.block]} · ${topic.title}`;const picker=$('#editMacroTopicPicker');if(picker)picker.hidden=true}
 function toggleEditMacroTopicPicker(){const box=$('#editMacroTopicPicker');if(!box)return;box.hidden=!box.hidden;if(!box.hidden)box.scrollIntoView({behavior:'smooth',block:'nearest'})}
-function adminTurntableCreate(){if(!isAdmin)return home();markRoute('adminturntable');ttUploadFiles=[];app.innerHTML=`<div class="panel tt-admin-panel"><h2>Новый 360° макропрепарат</h2><div id="ttErr"></div><p class="muted">Выберите последовательные кадры по кругу. Порядок можно изменить стрелками; набор и задание сохранятся прямо на сайте.</p><label>Название набора</label><input id="ttTitle" placeholder="Например, хроническая язва желудка"><label>Кадры (JPEG, PNG или WebP; до 120 файлов, каждый до 5 МБ)</label><input id="ttFiles" type="file" accept="image/jpeg,image/png,image/webp" multiple><div id="ttPreview" class="tt-upload-list"></div><label>Текст задания</label><textarea id="ttPrompt" placeholder="Определите патологический процесс по макропрепарату.">Определите патологический процесс по макропрепарату.</textarea><label>Варианты ответа и правильный вариант</label><div id="ttOptions">${[0,1,2,3].map(i=>`<div class="tt-option-row"><input type="radio" name="ttCorrect" value="${i}" ${i===0?'checked':''} aria-label="Правильный ответ"><input class="tt-option" placeholder="Вариант ответа ${i+1}" value="Вариант ответа ${i+1}"></div>`).join('')}</div><label>Пояснение</label><textarea id="ttExplanation" placeholder="Кратко объясните диагностические признаки"></textarea><label><input type="checkbox" id="ttPublish"> Опубликовать после загрузки</label><div class="row"><button id="ttSave" onclick="toggleTurntableTopicPicker()">Добавить в раздел макро</button><button class="secondary" onclick="admin()">Отмена</button></div><div id="ttTopicPicker" class="tt-topic-picker" hidden><p class="muted">Выберите тему, в которую добавить этот 360° макропрепарат:</p>${macroTopicChoices('saveTurntableSet')}</div></div>`;$('#ttFiles').onchange=()=>{const selected=[...($('#ttFiles').files||[])];ttUploadFiles=selected;renderTurntableFileOrder()}}
+function adminTurntableCreate(){if(!isAdmin)return home();markRoute('adminturntable');ttUploadFiles=[];app.innerHTML=`<div class="panel tt-admin-panel"><h2>Новый 360° макропрепарат</h2><div id="ttErr"></div><p class="muted">Выберите последовательные кадры по кругу. Порядок кадров можно изменить перетаскиванием; набор и задание сохранятся прямо на сайте.</p><label>Название набора</label><input id="ttTitle" placeholder="Например, хроническая язва желудка"><label>Кадры (JPEG, PNG или WebP; до 120 файлов, каждый до 5 МБ)</label><input id="ttFiles" type="file" accept="image/jpeg,image/png,image/webp" multiple><div id="ttPreview" class="tt-upload-list"></div><label>Текст задания</label><textarea id="ttPrompt" placeholder="Определите патологический процесс по макропрепарату.">Определите патологический процесс по макропрепарату.</textarea><label>Варианты ответа и правильный вариант</label><div id="ttOptions">${[0,1,2,3].map(i=>`<div class="tt-option-row"><input type="radio" name="ttCorrect" value="${i}" ${i===0?'checked':''} aria-label="Правильный ответ"><input class="tt-option" placeholder="Вариант ответа ${i+1}" value="Вариант ответа ${i+1}"></div>`).join('')}</div><label>Пояснение</label><textarea id="ttExplanation" placeholder="Кратко объясните диагностические признаки"></textarea><div class="tt-create-topic"><div class="row" style="align-items:center;justify-content:space-between"><strong>Добавление в режим «Макро»</strong><button type="button" class="secondary" onclick="toggleTurntableTopicPicker()">Выбрать тему (необязательно)</button></div><p id="ttCreateTopicSelected" class="muted">360°-задание не будет добавлено в папки режима «Макро».</p><input type="hidden" id="ttCreateTopicId"><div id="ttTopicPicker" class="tt-topic-picker" hidden><p class="muted">Выберите тему для включения задания в режим «Макро»:</p>${macroTopicChoices('selectCreateMacroTopic')}</div></div><label><input type="checkbox" id="ttPublish" checked> Опубликовать после загрузки</label><div class="row"><button id="ttSave" onclick="saveTurntableSet()">Загрузить и опубликовать</button><button class="secondary" onclick="admin()">Отмена</button></div></div>`;$('#ttFiles').onchange=()=>{const selected=[...($('#ttFiles').files||[])];ttUploadFiles=selected;renderTurntableFileOrder()}}
 function renderTurntableFileOrder(){const box=$('#ttPreview');if(!box)return;box.innerHTML=ttUploadFiles.map((f,i)=>`<div class="tt-upload-row" data-index="${i}"><img src="${URL.createObjectURL(f)}" alt=""><span title="${esc(f.name)}">${esc(f.name)}</span><span class="tt-upload-status" data-tt-status="${i}"></span><div><button type="button" class="secondary" onclick="moveTurntableFile(${i},-1)" ${i===0?'disabled':''} aria-label="Переместить выше">↑</button><button type="button" class="secondary" onclick="moveTurntableFile(${i},1)" ${i===ttUploadFiles.length-1?'disabled':''} aria-label="Переместить ниже">↓</button><button type="button" class="secondary" onclick="removeTurntableFile(${i})" aria-label="Убрать кадр">×</button></div></div>`).join('');const note=document.createElement('div');note.className='muted';note.textContent=ttUploadFiles.length?`Выбрано кадров: ${ttUploadFiles.length}. Порядок сверху вниз.`:'Выберите фотографии, снятые последовательным обходом объекта.';box.prepend(note)}
 function moveTurntableFile(i,d){const j=i+d;if(j<0||j>=ttUploadFiles.length)return;[ttUploadFiles[i],ttUploadFiles[j]]=[ttUploadFiles[j],ttUploadFiles[i]];renderTurntableFileOrder()}
 function removeTurntableFile(i){ttUploadFiles.splice(i,1);renderTurntableFileOrder()}
-async function saveTurntableSet(topicId){
+async function saveTurntableSet(){
   if(!isAdmin)return home();
   const err=$('#ttErr'),btn=$('#ttSave'),uploaded=[];let setId=null;
   try{
@@ -1260,8 +1276,9 @@ async function saveTurntableSet(topicId){
     if(!promptText)throw new Error('Введите текст задания');
     if(options.filter(Boolean).length<2||!options[correct])throw new Error('Заполните минимум два варианта и отметьте правильный');
     for(const f of ttUploadFiles){if(!EXT[f.type])throw new Error(`Формат файла «${f.name}» не поддерживается. Используйте JPEG, PNG или WebP.`);if(f.size>5*1024*1024)throw new Error(`Файл «${f.name}» больше 5 МБ.`)}
-    const topic=topics.find(t=>String(t.id)===String(topicId)&&['general','specific'].includes(t.block));
-    if(!topic)throw new Error('Выберите тему из общей или частной патологии.');
+    const selectedTopicId=$('#ttCreateTopicId')?.value||'';
+    const topic=selectedTopicId?topics.find(t=>String(t.id)===String(selectedTopicId)&&['general','specific'].includes(t.block)):null;
+    if(selectedTopicId&&!topic)throw new Error('Выбранная тема больше не существует. Обновите страницу и выберите её заново.');
     btn.disabled=true;btn.textContent='Подготовка папки…';document.querySelectorAll('#ttPreview button,#ttTopicPicker button').forEach(b=>b.disabled=true);
     const set=await sb.from('turntable_sets').insert({title,frame_paths:[],created_by:me?.id||null}).select('id').single();
     if(set.error)throw set.error;setId=set.data.id;
@@ -1277,7 +1294,7 @@ async function saveTurntableSet(topicId){
     }
     const upd=await sb.from('turntable_sets').update({frame_paths:paths}).eq('id',setId);if(upd.error)throw upd.error;
     btn.textContent='Сохранение задания…';
-    const q=await sb.from('questions').insert({section:'macro',block:topic.block,topic_id:topic.id,prompt:promptText,image_path:'360:storage:'+setId,is_exam:true,is_published:false,created_by:me?.id||null}).select('id').single();
+    const q=await sb.from('questions').insert({section:'macro',block:topic?.block||null,topic_id:topic?.id||null,prompt:promptText,image_path:'360:storage:'+setId,is_exam:!!topic,is_published:false,created_by:me?.id||null}).select('id').single();
     if(q.error)throw q.error;
     const optionsInsert=await sb.from('question_options').insert(options.map((text,i)=>text?{question_id:q.data.id,option_text:text,sort_order:i}:null).filter(Boolean)).select('id,sort_order');
     if(optionsInsert.error)throw optionsInsert.error;
@@ -1288,7 +1305,7 @@ async function saveTurntableSet(topicId){
   }catch(e){
     if(setId)await sb.from('turntable_sets').delete().eq('id',setId);
     if(uploaded.length)try{await deleteTimewebFrames(uploaded)}catch(cleanupError){console.warn('Не удалось удалить временные кадры из Timeweb',cleanupError)}
-    fail(err,e);btn.disabled=false;btn.textContent='Добавить в раздел макро';document.querySelectorAll('#ttPreview button,#ttTopicPicker button').forEach(b=>b.disabled=false);
+    fail(err,e);btn.disabled=false;btn.textContent='Загрузить и опубликовать';document.querySelectorAll('#ttPreview button,#ttTopicPicker button').forEach(b=>b.disabled=false);
   }
 }
 async function admin(mark=true){if(mark)markRoute('admin');
@@ -1301,7 +1318,7 @@ async function admin(mark=true){if(mark)markRoute('admin');
   const turntableIds=[...new Set(data.map(r=>{if(!isTurntablePath(r.image_path))return null;const base=turntableBase(r.image_path);return base.startsWith('storage:')?base.slice(8):null}).filter(Boolean))];
   const turntableTitleMap=new Map();
   if(turntableIds.length){const sets=await sb.from('turntable_sets').select('id,title').in('id',turntableIds);if(!sets.error)(sets.data||[]).forEach(x=>turntableTitleMap.set(String(x.id),x.title||'Без названия'));}
-  app.innerHTML=`<h2>Администратор</h2><div class="row" style="margin:0 0 16px"><button onclick="editQ()">+ Новый вопрос</button><button class="secondary" onclick="adminTurntableCreate()">+ Новый 360° набор</button><button class="secondary" onclick="importQuestionsPage()">Импорт из Word</button><button class="secondary" onclick="adminTrash()">Корзина</button><button class="secondary" onclick="adminStats()">Статистика</button><button class="secondary" onclick="adminMaterials()">Материалы</button><button class="secondary" onclick="adminContent()">Оформление главной</button><button class="secondary" onclick="adminNotifications()">Уведомления</button><button class="secondary" onclick="adminQuestionComments()">Комментарии к вопросам</button></div><h3>Вопросы</h3><div class="row"><select id="fs" onchange="selectedAdminQuestions.clear();admin()"><option value="">Все режимы</option>${['macro','micro','theory'].map(s=>`<option value="${s}" ${s===fs?'selected':''}>${MODES[s][1]}</option>`).join('')}<option value="360" ${fs==='360'?'selected':''}>360° Макро</option></select><select id="ft" onchange="selectedAdminQuestions.clear();admin()"><option value="">Все темы</option>${[...topics].sort((a,b)=>({general:0,specific:1}[a.block]-{general:0,specific:1}[b.block])||a.sort_order-b.sort_order||a.title.localeCompare(b.title,'ru')).map(t=>`<option value="${t.id}" ${String(t.id)===ft?'selected':''}>${esc((BLOCKS[t.block]||'')+' / '+t.title)}</option>`).join('')}</select><select id="fp" onchange="selectedAdminQuestions.clear();admin()"><option value="">Любой статус</option><option value="1" ${fp==='1'?'selected':''}>Опубликованные</option><option value="0" ${fp==='0'?'selected':''}>Черновики</option></select></div><div class="row" style="margin:12px 0"><label style="display:flex;align-items:center;gap:8px;margin:0"><input type="checkbox" id="selectAllAdminQuestions" onchange="toggleSelectAllAdminQuestions(this.checked)"> Выбрать все в этом списке (${(data||[]).length})</label><button class="secondary" onclick="deleteSelectedAdminQuestions()">🗑 Удалить выбранные (<span id="selectedAdminCount">${selectedAdminQuestions.size}</span>)</button></div><div class="panel"><div class="admin-questions-table-wrap"><table>`+(data||[]).map(r=>{const base=isTurntablePath(r.image_path)?turntableBase(r.image_path):'',setId=base.startsWith('storage:')?base.slice(8):'',ttTitle=setId?turntableTitleMap.get(String(setId)):null;return `<tr><td><input type="checkbox" class="admin-question-select" value="${r.id}" ${selectedAdminQuestions.has(String(r.id))?'checked':''} onchange="selectAdminQuestion('${r.id}',this.checked)" aria-label="Выбрать вопрос"></td><td>${ttTitle?`360° Макро · ${esc(ttTitle)}`:esc((r.prompt||'').slice(0,80))}<br><small class="muted">${MODES[r.section][1]} · ${esc(tn(r.topic_id))}${r.is_exam&&!ttTitle?' · ЭКЗАМЕН':''}</small></td><td><button type="button" class="status-toggle" title="Нажмите, чтобы ${r.is_published?'снять с публикации':'опубликовать'}" aria-label="${r.is_published?'Снять с публикации':'Опубликовать'} вопрос" onclick="toggleQuestionPublish('${r.id}',${!!r.is_published})">${r.is_published?'✅':'📝'}</button></td><td><button class="secondary" onclick="editQ('${r.id}')">Изменить</button></td></tr>`}).join('')+`</table></div>`;
+  app.innerHTML=`<h2>Администратор</h2><div class="row" style="margin:0 0 16px"><button onclick="editQ()">+ Новый вопрос</button><button class="secondary" onclick="adminTurntableCreate()">+ Новый 360° набор</button><button class="secondary" onclick="importQuestionsPage()">Импорт из Word</button><button class="secondary" onclick="adminTrash()">Корзина</button><button class="secondary" onclick="adminStats()">Статистика</button><button class="secondary" onclick="adminMaterials()">Материалы</button><button class="secondary" onclick="adminContent()">Оформление главной</button><button class="secondary" onclick="adminNotifications()">Уведомления</button><button class="secondary" onclick="adminQuestionComments()">Комментарии к вопросам</button></div><h3>Вопросы</h3><div class="row"><select id="fs" onchange="selectedAdminQuestions.clear();admin()"><option value="">Все режимы</option>${['macro','micro','theory'].map(s=>`<option value="${s}" ${s===fs?'selected':''}>${MODES[s][1]}</option>`).join('')}<option value="360" ${fs==='360'?'selected':''}>360° Макро</option></select><select id="ft" onchange="selectedAdminQuestions.clear();admin()"><option value="">Все темы</option>${[...topics].sort((a,b)=>({general:0,specific:1}[a.block]-{general:0,specific:1}[b.block])||a.sort_order-b.sort_order||a.title.localeCompare(b.title,'ru')).map(t=>`<option value="${t.id}" ${String(t.id)===ft?'selected':''}>${esc((BLOCKS[t.block]||'')+' / '+t.title)}</option>`).join('')}</select><select id="fp" onchange="selectedAdminQuestions.clear();admin()"><option value="">Любой статус</option><option value="1" ${fp==='1'?'selected':''}>Опубликованные</option><option value="0" ${fp==='0'?'selected':''}>Черновики</option></select></div><div class="row" style="margin:12px 0"><label style="display:flex;align-items:center;gap:8px;margin:0"><input type="checkbox" id="selectAllAdminQuestions" onchange="toggleSelectAllAdminQuestions(this.checked)"> Выбрать все в этом списке (${(data||[]).length})</label><button class="secondary" onclick="deleteSelectedAdminQuestions()">🗑 Удалить выбранные (<span id="selectedAdminCount">${selectedAdminQuestions.size}</span>)</button></div><div class="panel"><div class="admin-questions-table-wrap"><table>`+(data||[]).map(r=>{const base=isTurntablePath(r.image_path)?turntableBase(r.image_path):'',setId=base.startsWith('storage:')?base.slice(8):'',ttTitle=setId?turntableTitleMap.get(String(setId)):null;return `<tr><td><input type="checkbox" class="admin-question-select" value="${r.id}" ${selectedAdminQuestions.has(String(r.id))?'checked':''} onchange="selectAdminQuestion('${r.id}',this.checked)" aria-label="Выбрать вопрос"></td><td>${ttTitle&&r.topic_id?`360° Макро · ${esc(ttTitle)}`:esc((r.prompt||'').slice(0,80))}${isTurntablePath(r.image_path)&&!r.topic_id?'':`<br><small class="muted">${MODES[r.section][1]} · ${esc(tn(r.topic_id))}${r.is_exam&&!ttTitle?' · ЭКЗАМЕН':''}</small>`}</td><td><button type="button" class="status-toggle" title="Нажмите, чтобы ${r.is_published?'снять с публикации':'опубликовать'}" aria-label="${r.is_published?'Снять с публикации':'Опубликовать'} вопрос" onclick="toggleQuestionPublish('${r.id}',${!!r.is_published})">${r.is_published?'✅':'📝'}</button></td><td><button class="secondary" onclick="editQ('${r.id}')">Изменить</button></td></tr>`}).join('')+`</table></div>`;
 }
 
 
@@ -1446,7 +1463,7 @@ async function commitDocxImport(){
       if(q.isDuplicate){duplicates++;result.innerHTML=`<div class="notice">Импорт выполняется: ${i+1} из ${docxImportRows.length}…</div><div class="muted">Успешно добавлено: ${imported} · Дубликатов пропущено: ${duplicates} · Ошибок: ${failures.length}</div>`;continue}
       try{
         // Explanation is stored in question_answers, not questions. Some deployed schemas do not have questions.explanation.
-        const row={section,block:topic.block,topic_id:topic.id,prompt:q.prompt,is_exam:false,is_published:false,created_by:me?.id||null};
+        const row={section,block:topic.block,topic_id:topic.id,prompt:q.prompt,is_exam:!!topic,is_published:false,created_by:me?.id||null};
         const ins=await sb.from('questions').insert(row).select('id').single();
         if(ins.error)throw new Error(ins.error.message);
         qid=ins.data.id;
@@ -1999,7 +2016,12 @@ if(!window.__stbBound){
 .tt-edit-topic-action{display:grid;gap:8px;margin:14px 0}
 .tt-order-btn{min-width:30px!important;width:30px;padding:0!important;height:32px}
 .tt-order-btn:disabled{opacity:.3;cursor:not-allowed}
-.tt-edit-frame.is-dragging{outline:2px solid #c99bb1;outline-offset:1px}
+.tt-edit-frame{transition:transform 220ms cubic-bezier(.2,.75,.25,1);will-change:transform}
+.tt-edit-frame.is-dragging{outline:2px solid #c99bb1;outline-offset:1px;box-shadow:0 14px 34px rgba(70,48,115,.18);z-index:2;position:relative;opacity:.96}
+.tt-drag-handle{cursor:grab;touch-action:none}
+.tt-drag-handle:active{cursor:grabbing}
+.tt-edit-list.is-reordering .tt-edit-frame:not(.is-dragging){transition:background-color .16s ease,box-shadow .16s ease}
+.tt-create-topic{padding:14px 16px;margin:14px 0;border:1px solid var(--line);border-radius:14px;background:rgba(136,117,220,.055)}
 </style>
 <script type="module">
 (async()=>{
@@ -2008,7 +2030,7 @@ if(!window.__stbBound){
   try{
     const {createClient,SupabaseAuthAdapter}=await import('https://esm.sh/@neondatabase/neon-js@0.9.0-beta?bundle');
     const client=createClient({
-      auth:{url:AUTH_URL,adapter:SupabaseAuthAdapter(),allowAnonymous:true},
+      auth:{url:AUTH_URL,adapter:SupabaseAuthAdapter()},
       dataApi:{url:DATA_API_URL}
     });
     window.CFG={url:AUTH_URL,key:'',emailDomain:'testpatan-vgmu.com'};
