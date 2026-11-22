@@ -1,0 +1,11 @@
+{
+  "name": "testpatan-neon-functions",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.900.0",
+    "@neon/config": "^1.13.0",
+    "jose": "^6.1.0",
+    "pg": "^8.16.3"
+  }
+}
