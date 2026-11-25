@@ -604,22 +604,18 @@ const $=s=>document.querySelector(s),app=$('#app');
 // Do not push browser history on every DOM update. Native Back/Forward stays predictable.
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const sb=supabase.createClient(CFG.url,CFG.key);
-// Guest attempts are executed only by the narrowly-scoped Neon Function gateway.
-// No database credentials or privileged JWT are exposed to the browser.
+// Anonymous visitors use a narrow server-side gateway; no Neon JWT or DB credentials are exposed.
 const GUEST_RPC_URL='https://br-noisy-rain-bg4das6a-timewebs3.compute.c-9.eu-central-1.aws.neon.tech/guest-rpc';
-const GUEST_RPC_ALLOWLIST=new Set(['start_attempt','check_answer','finish_attempt','get_attempt_review','resume_guest_attempt']);
+const GUEST_RPC_ALLOWLIST=new Set(['list_topics','get_question_topics','start_attempt','check_answer','finish_attempt','get_attempt_review','resume_guest_attempt']);
 async function guestRpc(name,args={}){
   try{
     const response=await fetch(GUEST_RPC_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,args})});
     let payload;try{payload=await response.json()}catch(_){payload=null}
-    if(!response.ok)return {data:null,error:{message:payload?.error||`Ошибка гостевого сервиса (${response.status})`}};
-    return payload&&Object.prototype.hasOwnProperty.call(payload,'data')?payload:{data:null,error:{message:payload?.error||'Некорректный ответ гостевого сервиса'}};
+    if(!response.ok)return {data:null,error:{message:payload?.error?.message||payload?.error||`Ошибка гостевого сервиса (${response.status})`}};
+    return payload&&Object.prototype.hasOwnProperty.call(payload,'data')?payload:{data:null,error:{message:payload?.error?.message||'Некорректный ответ гостевого сервиса'}};
   }catch(error){return {data:null,error:{message:error?.message||'Не удалось связаться с гостевым сервисом'}}}
 }
-function appRpc(name,args={}){
-  if(!me&&GUEST_RPC_ALLOWLIST.has(name))return guestRpc(name,args);
-  return sb.rpc(name,args);
-}
+function appRpc(name,args={}){return !me&&GUEST_RPC_ALLOWLIST.has(name)?guestRpc(name,args):sb.rpc(name,args)}
 const MODES={macro:['📷','Макро',''],micro:['🔬','Микро',''],theory:['📖','Теория',''],exam:['🎓','Экзамен',''],favorites:['★','Избранное','']};
 const BLOCKS={general:'Общая патология',specific:'Частная патология'};
 let me=null,isAdmin=false,topics=[],Q=null;
@@ -703,7 +699,7 @@ async function init(){
     if(session) {
       try { await claimLegacyAccount(); await loadMe(); } catch(e) { console.warn('Neon profile/legacy claim failed:',e); me=null; isAdmin=false; }
     }
-    const t=await sb.from('topics').select('*').order('sort_order');
+    const t=me?await sb.from('topics').select('*').order('sort_order'):await guestRpc('list_topics');
     if(t.error) {
       console.error('Topics request failed:',t.error);
       topics=[];
@@ -752,12 +748,11 @@ function setupHomeFavoritesRail(){const rail=$('#home-favorites-track');if(!rail
 async function removeHomeFavorite(id){if(!me)return;const {error}=await sb.from('question_favorites').delete().eq('user_id',me.id).eq('question_id',id);if(error)return toast(msg(error));toast('Убрано из избранного');loadHomeFavorites()}
 function savedAttemptKey(id='current'){return 'testpatan_attempt_'+(me?.id||'guest')+'_'+id}
 function saveCurrentAttempt(){if(!Q||!Q.id||Q.mode==='favorites')return;const savedAt=Date.now();const localState={id:Q.id,qs:Q.qs,tasks:Q.tasks,i:Q.i,mode:Q.mode,t0:Q.t0,answers:Q.answers||{},order:Q.order||{},showAllNumbers:!!Q.showAllNumbers,marathon:!!Q.marathon,isMarathon:!!Q.isMarathon,savedAt};try{localStorage.setItem(savedAttemptKey(Q.id),JSON.stringify(localState))}catch(e){console.warn('attempt autosave',e)}
- if(!me)return; // Guest progress is kept locally; authenticated progress is also synchronized with Neon.
- // Persist the question order and current position server-side so the attempt can resume on mobile/another device.
+ if(!me)return; // Guest progress remains local; authenticated progress is also synchronized with Neon.
  try{const taskOrder=(Q.tasks||[]).map(t=>t.map(q=>q.id));const optionOrder=Object.fromEntries(Object.entries(Q.order||{}).map(([qid,opts])=>[qid,(opts||[]).map(o=>o.id)]));const remoteState={id:Q.id,taskOrder,optionOrder,i:Q.i,mode:Q.mode,t0:Q.t0,answers:Q.answers||{},showAllNumbers:!!Q.showAllNumbers,marathon:!!Q.marathon,isMarathon:!!Q.isMarathon,savedAt};if(!Q._remoteStateSaved)remoteState.qs=Q.qs;sb.rpc('save_my_attempt_state',{p_attempt_id:Q.id,p_state:remoteState}).then(({error})=>{if(error)console.warn('server attempt autosave',error.message);else Q._remoteStateSaved=true}).catch(e=>console.warn('server attempt autosave',e))}catch(e){console.warn('server attempt autosave',e)}}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')saveCurrentAttempt()});
 window.addEventListener('pagehide',()=>saveCurrentAttempt());
-async function resumeAttempt(id){try{let state=null;try{state=JSON.parse(localStorage.getItem(savedAttemptKey(id))||'null')}catch(_){}if((!state||String(state.id)!==String(id))&&me){const {data,error}=await sb.rpc('get_my_attempt_state',{p_attempt_id:id});if(error)throw error;state=data||null}if(!state||String(state.id)!==String(id)){toast('Для этой старой попытки не найдено сохранённое состояние. Новые попытки будут доступны для продолжения на мобильном устройстве.');return home()}if(state.taskOrder&&state.qs){const byId=Object.fromEntries(state.qs.map(q=>[String(q.id),q]));state.tasks=state.taskOrder.map(ids=>ids.map(qid=>byId[String(qid)]).filter(Boolean));state.order=Object.fromEntries(Object.entries(state.optionOrder||{}).map(([qid,ids])=>[qid,ids.map(oid=>(byId[String(qid)]?.options||[]).find(o=>String(o.id)===String(oid))).filter(Boolean)]))}if(state.marathon||state.isMarathon){const {error}=me?await sb.rpc('resume_my_attempt',{p_attempt:id}):await guestRpc('resume_guest_attempt',{p_attempt:id});if(error)throw error}Q={...state,tasks:state.tasks||groupTasks(state.qs)};Q.order=Q.order||{};Q.answers=Q.answers||{};try{localStorage.setItem(savedAttemptKey(id),JSON.stringify(Q))}catch(_){}markRoute('quiz');showQ()}catch(e){console.warn('resume attempt',e);toast('Не удалось возобновить попытку: '+(e?.message||'ошибка'));home()}}
+async function resumeAttempt(id){try{let state=null;try{state=JSON.parse(localStorage.getItem(savedAttemptKey(id))||'null')}catch(_){}if(!state||String(state.id)!==String(id)){const {data,error}=await sb.rpc('get_my_attempt_state',{p_attempt_id:id});if(error)throw error;state=data||null}if(!state||String(state.id)!==String(id)){toast('Для этой старой попытки не найдено сохранённое состояние. Новые попытки будут доступны для продолжения на мобильном устройстве.');return home()}if(state.taskOrder&&state.qs){const byId=Object.fromEntries(state.qs.map(q=>[String(q.id),q]));state.tasks=state.taskOrder.map(ids=>ids.map(qid=>byId[String(qid)]).filter(Boolean));state.order=Object.fromEntries(Object.entries(state.optionOrder||{}).map(([qid,ids])=>[qid,ids.map(oid=>(byId[String(qid)]?.options||[]).find(o=>String(o.id)===String(oid))).filter(Boolean)]))}if(state.marathon||state.isMarathon){const {error}=await sb.rpc('resume_my_attempt',{p_attempt:id});if(error)throw error}Q={...state,tasks:state.tasks||groupTasks(state.qs)};Q.order=Q.order||{};Q.answers=Q.answers||{};try{localStorage.setItem(savedAttemptKey(id),JSON.stringify(Q))}catch(_){}markRoute('quiz');showQ()}catch(e){console.warn('resume attempt',e);toast('Не удалось возобновить попытку: '+(e?.message||'ошибка'));home()}}
 function resultModeIcon(mode){
  const common='viewBox="0 0 24 24" aria-hidden="true"';
  if(mode==='macro') return `<svg ${common}><path d="M2.8 10.1c2.2-2.8 5.2-4.4 9.1-4.7 2.1-.2 3.8.3 5.5 1.1 1.4.7 2.7 1.1 4.1 1.1.8 0 1.3.5 1.3 1.3 0 2.2-.8 4.2-2.5 5.7-1.7 1.6-4.1 2.3-7.1 2.1-2.1-.1-3.9.4-5.4 1.5-1.2.8-2.6.6-3.5-.4-1.8-1.9-2.3-4.7-1.5-7.7Z"/><path d="M13.2 7.1c-.4 2.4.1 4.1 1.7 5.2 1.1.8 2.5 1.1 4.3.8"/><path d="M10.2 17c.6-1.8 1.5-3.1 2.9-4"/></svg>`;
@@ -1169,7 +1164,7 @@ async function finish(){
     try{localStorage.removeItem(savedAttemptKey(Q.id))}catch(e){}
   }
   const rv=(await appRpc('get_attempt_review',{p_attempt:Q.id})).data||[];
-  if((Q.marathon||Q.mode==='marathon'||Q.isMarathon)&&me){const ids=[...new Set(rv.map(r=>r.question_id))];const qr=ids.length?await sb.from('questions').select('id,topic_id').in('id',ids):{data:[]};const topicByQuestion=Object.fromEntries((qr.data||[]).map(x=>[x.id,x.topic_id]));rv.forEach(r=>{const q=Q.qs.find(x=>x.id===r.question_id);if(q)q.topic_id=topicByQuestion[r.question_id]||null;});}
+  if(Q.marathon||Q.mode==='marathon'||Q.isMarathon){const ids=[...new Set(rv.map(r=>r.question_id))];const qr=ids.length?(me?await sb.from('questions').select('id,topic_id').in('id',ids):await guestRpc('get_question_topics',{p_question_ids:ids})):{data:[]};const topicByQuestion=Object.fromEntries((qr.data||[]).map(x=>[x.id,x.topic_id]));rv.forEach(r=>{const q=Q.qs.find(x=>x.id===r.question_id);if(q)q.topic_id=topicByQuestion[r.question_id]||null;});}
   const txt=(q,id)=>(q.options.find(o=>o.id===id)||{}).text||'— нет ответа —';
   let topicSummary='';if(Q.marathon||Q.mode==='marathon'||Q.isMarathon){const stats={};rv.forEach(r=>{const q=Q.qs.find(x=>x.id===r.question_id);if(!q)return;const t=topics.find(x=>String(x.id)===String(q.topic_id));const key=String(q.topic_id||'none'),label=t?.title||'Без темы';stats[key]=stats[key]||{label,total:0,correct:0};stats[key].total++;if(r.is_correct)stats[key].correct++});topicSummary='<h2>Результаты по темам</h2>'+Object.values(stats).sort((a,b)=>(a.correct/a.total)-(b.correct/b.total)).map(t=>{const pct=Math.round(t.correct/t.total*100);return `<div class="topic-result-card"><b>${esc(t.label)}</b><div class="muted">${t.correct} из ${t.total} правильных ответов · ${pct}%</div><div class="progress"><span style="width:${pct}%"></span></div></div>`}).join('')}
   const detailedReview=(Q.marathon||Q.mode==='marathon'||Q.isMarathon)?'':rv.map(r=>{const q=Q.qs.find(x=>x.id===r.question_id);return `<div class="feedback"><b>${r.is_correct?'✅':'❌'} ${esc(r.prompt)}</b><br>Ваш ответ: ${esc(txt(q,r.chosen_option_id))}<br>${r.is_correct?'':`Верно: ${esc(txt(q,r.correct_option_id))}<br>`}${esc(r.explanation||'')}</div>`}).join('');app.innerHTML=`<div class="panel"><h2>Результат: ${data.correct_count} из ${data.question_count} (${data.percent}%)</h2>${topicSummary}${detailedReview}${Q.mode==='favorites'?'<button class="secondary" onclick="favoritesPage()">К избранному</button> ':''}<button onclick="home()">На главную</button></div>`;

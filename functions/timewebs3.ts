@@ -59,7 +59,7 @@ function uploadPolicy(key:string,contentType:string){
 type GuestRpcBody={name?:unknown;args?:Record<string,unknown>};
 const guestRate=new Map<string,{window:number;count:number;starts:number;startWindow:number}>();
 const UUID_RE=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const guestRpcNames=new Set(["start_attempt","check_answer","finish_attempt","get_attempt_review","resume_guest_attempt"]);
+const guestRpcNames=new Set(["list_topics","get_question_topics","start_attempt","check_answer","finish_attempt","get_attempt_review","resume_guest_attempt"]);
 function guestError(message:string,status=400){return Response.json({data:null,error:{message}},{status});}
 async function handleGuestRpc(request:Request,cors:Record<string,string>):Promise<Response>{
   const respond=(body:unknown,status=200)=>Response.json(body,{status,headers:cors});
@@ -92,7 +92,14 @@ async function handleGuestRpc(request:Request,cors:Record<string,string>):Promis
     await client.query("RESET request.jwt.claims");
 
     let result;
-    if(name==="start_attempt"){
+    if(name==="list_topics"){
+      // Only public folder metadata is exposed; no questions, answer keys, profiles or private rows.
+      result=await client.query("select coalesce(jsonb_agg(to_jsonb(t) order by t.sort_order, t.title), '[]'::jsonb) as data from public.topics t");
+    }else if(name==="get_question_topics"){
+      const rawIds=args.p_question_ids;
+      if(!Array.isArray(rawIds)||rawIds.length>1000||rawIds.some(id=>typeof id!=="string"||!UUID_RE.test(id)))throw new Error("Некорректный список вопросов.");
+      result=await client.query("select coalesce(jsonb_agg(jsonb_build_object('id',q.id,'topic_id',q.topic_id)), '[]'::jsonb) as data from public.questions q where q.id=any($1::uuid[]) and q.is_published",[rawIds]);
+    }else if(name==="start_attempt"){
       const mode=String(args.p_mode||"");
       if(!["macro","micro","theory","exam"].includes(mode))throw new Error("Неверный режим.");
       const topic=args.p_topic_id==null?null:Number(args.p_topic_id);
