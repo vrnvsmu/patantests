@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ТестПатан ВГМУ</title>
 <style>
@@ -618,7 +618,7 @@ const s3MediaUrl=p=>{if(!p)return '';const value=String(p).trim();if(/^https?:\/
 // Не переименовываем старые ключи: bare filename означает прежний путь в корне бакета.
 const turntableStoredKey=(p,id)=>{const raw=String(p||'').trim();if(/^https?:\/\//i.test(raw))return raw;const key=normalizeS3Key(raw);return key.startsWith('turntables/')?key:key};
 // Чтение — напрямую из Timeweb S3; запись и удаление — через Neon Function.
-const TIMEWEB_S3_FUNCTION_URL='https://br-noisy-wave-bgd1po12-timewebs3.compute.c-9.eu-central-1.aws.neon.tech/';
+const TIMEWEB_S3_FUNCTION_URL='https://br-noisy-rain-bg4das6a-timewebs3.compute.c-9.eu-central-1.aws.neon.tech/';
 async function timewebS3Request(method,path,file){
   const {data:{session},error:sessionError}=await sb.auth.getSession();
   if(sessionError)throw sessionError;
@@ -2025,8 +2025,8 @@ if(!window.__stbBound){
 </style>
 <script type="module">
 (async()=>{
-  const AUTH_URL='https://ep-late-pine-bgp0ezs7.neonauth.c-9.eu-central-1.aws.neon.tech/neondb/auth';
-  const DATA_API_URL='https://ep-late-pine-bgp0ezs7.apirest.c-9.eu-central-1.aws.neon.tech/neondb/rest/v1';
+  const AUTH_URL='https://ep-dry-brook-bgzeng9i.neonauth.c-9.eu-central-1.aws.neon.tech/neondb/auth';
+  const DATA_API_URL='https://ep-dry-brook-bgzeng9i.apirest.c-9.eu-central-1.aws.neon.tech/neondb/rest/v1';
   try{
     const {createClient,SupabaseAuthAdapter}=await import('https://esm.sh/@neondatabase/neon-js@0.9.0-beta?bundle');
     const client=createClient({
