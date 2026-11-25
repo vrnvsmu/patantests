@@ -55,11 +55,98 @@ function uploadPolicy(key:string,contentType:string){
   if(!/^image\/(jpeg|png|webp)$/i.test(contentType))throw new Response(JSON.stringify({error:"Разрешены только JPEG, PNG и WebP."}),{status:415});
   return 5*1024*1024;
 }
+
+type GuestRpcBody={name?:unknown;args?:Record<string,unknown>};
+const guestRate=new Map<string,{window:number;count:number;starts:number;startWindow:number}>();
+const UUID_RE=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const guestRpcNames=new Set(["start_attempt","check_answer","finish_attempt","get_attempt_review","resume_guest_attempt"]);
+function guestError(message:string,status=400){return Response.json({data:null,error:{message}},{status});}
+async function handleGuestRpc(request:Request,cors:Record<string,string>):Promise<Response>{
+  const respond=(body:unknown,status=200)=>Response.json(body,{status,headers:cors});
+  if(request.method!=="POST")return respond({error:"Метод не поддерживается."},405);
+  const length=Number(request.headers.get("content-length")||0);
+  if(length>16_384)return respond({error:"Слишком большой запрос."},413);
+  let body:GuestRpcBody;
+  try{body=await request.json() as GuestRpcBody;}catch{return respond({data:null,error:{message:"Некорректный JSON."}},400);}
+  const name=String(body?.name||"");
+  const args=body?.args&&typeof body.args==="object"&&!Array.isArray(body.args)?body.args:{};
+  if(!guestRpcNames.has(name))return respond({data:null,error:{message:"Операция недоступна в гостевом режиме."}},403);
+
+  // Best-effort per-IP throttling. The database remains protected by the narrow RPC allowlist
+  // and attempt ownership checks; this bucket is an additional abuse-control layer.
+  const ip=(request.headers.get("cf-connecting-ip")||request.headers.get("x-real-ip")||request.headers.get("x-forwarded-for")||"unknown").split(",")[0].trim().slice(0,100);
+  const now=Date.now(),bucket=guestRate.get(ip)||{window:now,count:0,starts:0,startWindow:now};
+  if(now-bucket.window>15*60_000){bucket.window=now;bucket.count=0;}
+  if(now-bucket.startWindow>60*60_000){bucket.startWindow=now;bucket.starts=0;}
+  bucket.count++;
+  if(name==="start_attempt")bucket.starts++;
+  guestRate.set(ip,bucket);
+  if(ip!=="unknown"&&(bucket.count>240||bucket.starts>12))return respond({data:null,error:{message:"Слишком много гостевых запросов. Попробуйте позже."}},429);
+
+  const client=await pool.connect();
+  try{
+    await client.query("BEGIN");
+    // Ensure this pooled backend connection executes the existing auth.uid()-aware functions
+    // in a genuinely anonymous context, never with a leftover request claim.
+    await client.query("RESET request.jwt.claim.sub");
+    await client.query("RESET request.jwt.claims");
+
+    let result;
+    if(name==="start_attempt"){
+      const mode=String(args.p_mode||"");
+      if(!["macro","micro","theory","exam"].includes(mode))throw new Error("Неверный режим.");
+      const topic=args.p_topic_id==null?null:Number(args.p_topic_id);
+      if(topic!==null&&(!Number.isSafeInteger(topic)||topic<=0))throw new Error("Некорректная тема.");
+      const count=Math.min(Math.max(Number(args.p_count??100)||100,1),100000);
+      result=await client.query("select public.start_attempt($1::text,$2::bigint,$3::integer) as data",[mode,topic,count]);
+    }else if(name==="check_answer"){
+      const attempt=String(args.p_attempt||""),question=String(args.p_question||""),option=String(args.p_option||"");
+      if(!UUID_RE.test(attempt)||!UUID_RE.test(question)||!UUID_RE.test(option))throw new Error("Некорректные идентификаторы ответа.");
+      result=await client.query("select public.check_answer($1::uuid,$2::uuid,$3::uuid) as data",[attempt,question,option]);
+    }else if(name==="finish_attempt"){
+      const attempt=String(args.p_attempt||"");
+      if(!UUID_RE.test(attempt))throw new Error("Некорректный идентификатор попытки.");
+      result=await client.query("select public.finish_attempt($1::uuid) as data",[attempt]);
+    }else if(name==="get_attempt_review"){
+      const attempt=String(args.p_attempt||"");
+      if(!UUID_RE.test(attempt))throw new Error("Некорректный идентификатор попытки.");
+      result=await client.query("select public.get_attempt_review($1::uuid) as data",[attempt]);
+    }else{
+      const attempt=String(args.p_attempt||"");
+      if(!UUID_RE.test(attempt))throw new Error("Некорректный идентификатор попытки.");
+      result=await client.query(`
+        with target as (
+          select id,question_count,status,
+                 (select count(*)::integer from public.attempt_answers aa where aa.attempt_id=a.id and aa.chosen_option_id is not null) as answered
+          from public.attempts a
+          where id=$1::uuid and user_id is null
+          for update
+        ), changed as (
+          update public.attempts a
+             set status='in_progress',finished_at=null
+            from target t
+           where a.id=t.id and t.answered<t.question_count
+          returning a.id
+        )
+        select exists(select 1 from changed) as data
+      `,[attempt]);
+      if(result.rows[0]?.data!==true)throw new Error("Гостевая попытка не найдена или уже завершена.");
+    }
+    await client.query("COMMIT");
+    return respond({data:result.rows[0]?.data??null,error:null});
+  }catch(error){
+    try{await client.query("ROLLBACK");}catch{}
+    const message=error instanceof Error?error.message:"Ошибка выполнения гостевой операции.";
+    return respond({data:null,error:{message}},200);
+  }finally{client.release();}
+}
+
 export default {async fetch(request:Request):Promise<Response>{
   const origin=request.headers.get("origin")??"";const cors=corsHeaders(origin);
   const respond=(body:unknown,status=200)=>Response.json(body,{status,headers:cors});
   if(origin&&!allowedOrigins.has(origin))return respond({error:"Origin не разрешён."},403);
   if(request.method==="OPTIONS")return new Response(null,{status:204,headers:cors});
+  if(new URL(request.url).pathname.replace(/\/+$/,"").endsWith("/guest-rpc"))return handleGuestRpc(request,cors);
   if(request.method!=="POST"&&request.method!=="DELETE")return respond({error:"Метод не поддерживается."},405);
   try{
     await requireAdmin(request);
