@@ -809,18 +809,9 @@ async function loadLatestResults(){
   if(error)throw error;
   const all=(data||[]).map(a=>{let saved=null;try{saved=JSON.parse(localStorage.getItem(savedAttemptKey(a.id))||'null')}catch(e){};const status=String(a.status||'').toLowerCase();const unfinished=!['finished','completed','done'].includes(status);const isMarathon=!!saved?.marathon||!!saved?.isMarathon||String(a.mode||'').toLowerCase()==='marathon'||(!a.topic_id&&Number(a.question_count||0)>100);return {...a,_saved:saved,_unfinished:unfinished,_marathon:isMarathon,_activity:new Date(a.created_at||0).getTime()||Number(saved?.savedAt)||0}});
   all.sort((a,b)=>b._activity-a._activity);
-  const firstTen=all.slice(0,10),candidateIds=[...new Set([...firstTen.map(a=>a.id),...all.filter(a=>a._marathon).map(a=>a.id)])];
+  const recent=all.slice(0,5),candidateIds=recent.map(a=>a.id);
   let answerStats={};
   if(candidateIds.length){const ar=await sb.rpc('get_my_attempt_stats',{p_attempt_ids:candidateIds});if(ar.error)throw ar.error;for(const x of (ar.data||[]))answerStats[x.attempt_id]={answered:Number(x.answered_count||0),correct:Number(x.correct_count||0)}}
-  // Keep the ten most recently active attempts, plus every marathon with unanswered questions.
-  const recent=firstTen.slice(),included=new Set(recent.map(a=>String(a.id)));
-  all.forEach(a=>{
-   const st=answerStats[a.id]||{answered:0,correct:0};
-   const hasLocal=!!a._saved&&String(a._saved.id)===String(a.id);
-   const marathonStillOpen=a._marathon&&Number(st.answered)<Number(a.question_count||0);
-   if(marathonStillOpen&&!included.has(String(a.id))){recent.push(a);included.add(String(a.id))}
-  });
-  recent.sort((a,b)=>b._activity-a._activity);
   if(!recent.length){box.innerHTML='<div class="favorite-empty compact-empty">Пока нет попыток. Начните тест — он появится здесь.</div>';return}
   box.innerHTML=recent.map(a=>{
    const saved=a._saved,stats=answerStats[a.id]||{answered:0,correct:0},isMarathon=a._marathon;
@@ -873,7 +864,7 @@ function pick(mode,mark=true){
   if(!['macro','micro','theory'].includes(mode))return;
   activeFolder[mode]=new Set();
   const labels={specific:'Частная',general:'Общая'};
-  const palette={macro:{specific:'#f4e5e8',general:'#efdcdf'},micro:{specific:'#e9e7f8',general:'#e1e6f5'},theory:{specific:'#e6eff8',general:'#e0e9f0'}};
+  const palette={macro:{specific:'#e9a9bd',general:'#d991a8'},micro:{specific:'#c3afea',general:'#a99cdd'},theory:{specific:'#a5d1e9',general:'#8ebed9'}};
   app.innerHTML=`<div class="section-folder-page" data-section="${mode}">
     <div class="section-folder-heading"><div><div class="eyebrow">${esc(MODES[mode][1]).toUpperCase()}</div><h2>${esc(MODES[mode][1])}: выберите папку</h2></div><button class="secondary" onclick="home()">На главную</button></div>
     <div class="section-folders">
@@ -2341,4 +2332,23 @@ html.tp-dark #app .question-actions .favorite-btn.save-button{background:var(--p
 }
 @media(max-width:700px){.topbar .top-actions{display:contents!important}.topbar .desktop-account #nav{right:0;left:auto}.topbar .desktop-account #nav button.ghost{flex:none!important}.topbar .top-search{order:3!important}}
 @media(prefers-reduced-motion:reduce){.topbar .desktop-account #nav,.desktop-theme i{transition:none!important}}
+</style>
+
+<style id="tp-folder-nav-final">
+#app .section-folder__tab{background:linear-gradient(145deg,color-mix(in srgb,var(--folder-color) 72%,white),var(--folder-color))!important;border-color:color-mix(in srgb,var(--folder-color) 85%,#777)!important}
+#app .section-folder__tab:before{background:linear-gradient(145deg,color-mix(in srgb,var(--folder-color) 65%,white),var(--folder-color));border-color:color-mix(in srgb,var(--folder-color) 85%,#777)}
+html.tp-dark #app .section-folder-page{--folder-ink:#f1edf4}
+html.tp-dark #app .section-folder__tab{color:#f5edf8!important;background:linear-gradient(145deg,color-mix(in srgb,var(--folder-color) 34%,#25232c),color-mix(in srgb,var(--folder-color) 19%,#25232c))!important;border-color:color-mix(in srgb,var(--folder-color) 50%,#25232c)!important;box-shadow:0 8px 22px #0003!important}
+html.tp-dark #app .section-folder__tab:before{background:color-mix(in srgb,var(--folder-color) 34%,#25232c);border-color:color-mix(in srgb,var(--folder-color) 50%,#25232c)}
+html.tp-dark #app .section-folder__meta{color:#e0d4e6!important}
+html.tp-dark #app .section-folder__indicator{background:#ffffff12!important;border-color:#ffffff30!important;box-shadow:none!important}
+html.tp-dark #app .section-folder__tab-shape{background:#ffffff12;box-shadow:none}
+html.tp-dark #app .dashboard-modes .marathon-mode-card{background:linear-gradient(105deg,#3b2938,#302b40)!important;border-color:#665069!important;color:#f1edf4!important;box-shadow:none!important}
+html.tp-dark #app .marathon-mode-copy strong{color:#f1edf4!important}html.tp-dark #app .marathon-mode-copy small{color:#c9bdcf!important}
+html.tp-dark #app .question-nav button.current{outline:none!important;border:2px solid #c4a0ff!important;box-shadow:inset 0 0 0 1px #c4a0ff!important;opacity:1!important}
+html.tp-dark #app .question-nav button.current.skipped{border-style:solid!important}
+html.tp-dark #notifPanel{background:#25232c!important;color:#f1edf4!important;border-color:#48404f!important}
+html.tp-dark #notifPanel :is(.notif-head,.notif-head b,.notif-title,.notif-item){color:#f1edf4!important;border-color:#48404f!important}
+html.tp-dark #notifPanel :is(.notif-body,.notif-item time,.notif-empty){color:#d2c8da!important}
+html.tp-dark #notifPanel .notif-item.new{background:#352c39!important}
 </style>
