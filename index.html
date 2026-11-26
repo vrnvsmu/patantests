@@ -605,7 +605,7 @@ const $=s=>document.querySelector(s),app=$('#app');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const sb=supabase.createClient(CFG.url,CFG.key);
 // Anonymous visitors use a narrow server-side gateway; no Neon JWT or DB credentials are exposed.
-const GUEST_RPC_URL='https://br-noisy-rain-bg4das6a-timewebs3.compute.c-9.eu-central-1.aws.neon.tech/guest-rpc';
+const GUEST_RPC_URL=''; // Вставьте фактический URL опубликованной функции guest из панели Neon.
 const GUEST_SESSION_KEY='testpatan_guest_session_v1';
 let guestSessionToken='';
 try{guestSessionToken=localStorage.getItem(GUEST_SESSION_KEY)||'';if(!/^[A-Za-z0-9_-]{32,128}$/.test(guestSessionToken))guestSessionToken=''}catch(_){}
@@ -613,7 +613,8 @@ if(!guestSessionToken){const bytes=new Uint8Array(32);crypto.getRandomValues(byt
 const GUEST_RPC_ALLOWLIST=new Set(['list_topics','get_question_topics','get_question_options','get_public_content','get_public_turntable','start_attempt','check_answer','finish_attempt','get_attempt_review','resume_guest_attempt']);
 async function guestRpc(name,args={}){
   try{
-    const requestArgs=['start_attempt','check_answer','finish_attempt','get_attempt_review','resume_guest_attempt'].includes(name)?{...args,p_guest_token:guestSessionToken}:args;
+    const requestArgs=['start_attempt','check_answer','finish_attempt','get_attempt_review','resume_guest_attempt'].includes(name)?{...args,p_guest_token:args.p_guest_token||guestSessionToken}:args;
+    if(!GUEST_RPC_URL)throw new Error('Не настроен адрес гостевого API (GUEST_RPC_URL).');
     const response=await fetch(GUEST_RPC_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,args:requestArgs})});
     let payload;try{payload=await response.json()}catch(_){payload=null}
     if(!response.ok)return {data:null,error:{message:payload?.error?.message||payload?.error||`Ошибка гостевого сервиса (${response.status})`}};
@@ -761,7 +762,7 @@ function saveCurrentAttempt(){if(!Q||!Q.id||Q.mode==='favorites')return;const sa
  try{const taskOrder=(Q.tasks||[]).map(t=>t.map(q=>q.id));const optionOrder=Object.fromEntries(Object.entries(Q.order||{}).map(([qid,opts])=>[qid,(opts||[]).map(o=>o.id)]));const remoteState={id:Q.id,taskOrder,optionOrder,i:Q.i,mode:Q.mode,t0:Q.t0,answers:Q.answers||{},showAllNumbers:!!Q.showAllNumbers,marathon:!!Q.marathon,isMarathon:!!Q.isMarathon,savedAt};if(!Q._remoteStateSaved)remoteState.qs=Q.qs;sb.rpc('save_my_attempt_state',{p_attempt_id:Q.id,p_state:remoteState}).then(({error})=>{if(error)console.warn('server attempt autosave',error.message);else Q._remoteStateSaved=true}).catch(e=>console.warn('server attempt autosave',e))}catch(e){console.warn('server attempt autosave',e)}}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')saveCurrentAttempt()});
 window.addEventListener('pagehide',()=>saveCurrentAttempt());
-async function resumeAttempt(id){try{let state=null;try{state=JSON.parse(localStorage.getItem(savedAttemptKey(id))||'null')}catch(_){}if(!me&&(!state||String(state.id)!==String(id))){throw new Error('Гостевое состояние попытки не найдено в этом браузере.')}if(me&&(!state||String(state.id)!==String(id))){const {data,error}=await sb.rpc('get_my_attempt_state',{p_attempt_id:id});if(error)throw error;state=data||null}if(!state||String(state.id)!==String(id)){toast('Для этой старой попытки не найдено сохранённое состояние. Новые попытки будут доступны для продолжения на мобильном устройстве.');return home()}if(state.taskOrder&&state.qs){const byId=Object.fromEntries(state.qs.map(q=>[String(q.id),q]));state.tasks=state.taskOrder.map(ids=>ids.map(qid=>byId[String(qid)]).filter(Boolean));state.order=Object.fromEntries(Object.entries(state.optionOrder||{}).map(([qid,ids])=>[qid,ids.map(oid=>(byId[String(qid)]?.options||[]).find(o=>String(o.id)===String(oid))).filter(Boolean)]))}if(state.marathon||state.isMarathon){const {error}=await sb.rpc('resume_my_attempt',{p_attempt:id});if(error)throw error}Q={...state,guestToken:state.guestToken||(!me?guestSessionToken:null),tasks:state.tasks||groupTasks(state.qs)};Q.order=Q.order||{};Q.answers=Q.answers||{};try{localStorage.setItem(savedAttemptKey(id),JSON.stringify(Q))}catch(_){}markRoute('quiz');showQ()}catch(e){console.warn('resume attempt',e);toast('Не удалось возобновить попытку: '+(e?.message||'ошибка'));home()}}
+async function resumeAttempt(id){try{let state=null;try{state=JSON.parse(localStorage.getItem(savedAttemptKey(id))||'null')}catch(_){}if(!me&&(!state||String(state.id)!==String(id))){throw new Error('Гостевое состояние попытки не найдено в этом браузере.')}if(me&&(!state||String(state.id)!==String(id))){const {data,error}=await sb.rpc('get_my_attempt_state',{p_attempt_id:id});if(error)throw error;state=data||null}if(!state||String(state.id)!==String(id)){toast('Для этой старой попытки не найдено сохранённое состояние. Новые попытки будут доступны для продолжения на мобильном устройстве.');return home()}if(state.taskOrder&&state.qs){const byId=Object.fromEntries(state.qs.map(q=>[String(q.id),q]));state.tasks=state.taskOrder.map(ids=>ids.map(qid=>byId[String(qid)]).filter(Boolean));state.order=Object.fromEntries(Object.entries(state.optionOrder||{}).map(([qid,ids])=>[qid,ids.map(oid=>(byId[String(qid)]?.options||[]).find(o=>String(o.id)===String(oid))).filter(Boolean)]))}if(state.marathon||state.isMarathon){const {error}=me?await sb.rpc('resume_my_attempt',{p_attempt:id}):await guestRpc('resume_guest_attempt',{p_attempt:id,p_guest_token:state.guestToken||guestSessionToken});if(error)throw error}Q={...state,guestToken:state.guestToken||(!me?guestSessionToken:null),tasks:state.tasks||groupTasks(state.qs)};Q.order=Q.order||{};Q.answers=Q.answers||{};try{localStorage.setItem(savedAttemptKey(id),JSON.stringify(Q))}catch(_){}markRoute('quiz');showQ()}catch(e){console.warn('resume attempt',e);toast('Не удалось возобновить попытку: '+(e?.message||'ошибка'));home()}}
 function resultModeIcon(mode){
  const common='viewBox="0 0 24 24" aria-hidden="true"';
  if(mode==='macro') return `<svg ${common}><path d="M2.8 10.1c2.2-2.8 5.2-4.4 9.1-4.7 2.1-.2 3.8.3 5.5 1.1 1.4.7 2.7 1.1 4.1 1.1.8 0 1.3.5 1.3 1.3 0 2.2-.8 4.2-2.5 5.7-1.7 1.6-4.1 2.3-7.1 2.1-2.1-.1-3.9.4-5.4 1.5-1.2.8-2.6.6-3.5-.4-1.8-1.9-2.3-4.7-1.5-7.7Z"/><path d="M13.2 7.1c-.4 2.4.1 4.1 1.7 5.2 1.1.8 2.5 1.1 4.3.8"/><path d="M10.2 17c.6-1.8 1.5-3.1 2.9-4"/></svg>`;
@@ -1172,7 +1173,7 @@ async function finish(){
   }else{
     try{localStorage.removeItem(savedAttemptKey(Q.id))}catch(e){}
   }
-  const rv=(await appRpc('get_attempt_review',{p_attempt:Q.id})).data||[];
+  const reviewResult=await appRpc('get_attempt_review',{p_attempt:Q.id});if(reviewResult.error){fail(app,reviewResult.error);return}const rv=reviewResult.data||[];
   if(Q.marathon||Q.mode==='marathon'||Q.isMarathon){const ids=[...new Set(rv.map(r=>r.question_id))];const qr=ids.length?(me?await sb.from('questions').select('id,topic_id').in('id',ids):await guestRpc('get_question_topics',{p_question_ids:ids})):{data:[]};const topicByQuestion=Object.fromEntries((qr.data||[]).map(x=>[x.id,x.topic_id]));rv.forEach(r=>{const q=Q.qs.find(x=>x.id===r.question_id);if(q)q.topic_id=topicByQuestion[r.question_id]||null;});}
   const txt=(q,id)=>(q.options.find(o=>o.id===id)||{}).text||'— нет ответа —';
   let topicSummary='';if(Q.marathon||Q.mode==='marathon'||Q.isMarathon){const stats={};rv.forEach(r=>{const q=Q.qs.find(x=>x.id===r.question_id);if(!q)return;const t=topics.find(x=>String(x.id)===String(q.topic_id));const key=String(q.topic_id||'none'),label=t?.title||'Без темы';stats[key]=stats[key]||{label,total:0,correct:0};stats[key].total++;if(r.is_correct)stats[key].correct++});topicSummary='<h2>Результаты по темам</h2>'+Object.values(stats).sort((a,b)=>(a.correct/a.total)-(b.correct/b.total)).map(t=>{const pct=Math.round(t.correct/t.total*100);return `<div class="topic-result-card"><b>${esc(t.label)}</b><div class="muted">${t.correct} из ${t.total} правильных ответов · ${pct}%</div><div class="progress"><span style="width:${pct}%"></span></div></div>`}).join('')}
@@ -1286,7 +1287,7 @@ function moveTurntableFile(i,d){const j=i+d;if(j<0||j>=ttUploadFiles.length)retu
 function removeTurntableFile(i){ttUploadFiles.splice(i,1);renderTurntableFileOrder()}
 async function saveTurntableSet(){
   if(!isAdmin)return home();
-  const err=$('#ttErr'),btn=$('#ttSave'),uploaded=[];let setId=null;
+  const err=$('#ttErr'),btn=$('#ttSave'),uploaded=[];let setId=null,questionId=null,committed=false,stage='Проверка формы';
   try{
     const title=$('#ttTitle').value.trim(),promptText=$('#ttPrompt').value.trim();
     const options=[...document.querySelectorAll('.tt-option')].map(x=>x.value.trim());
@@ -1301,8 +1302,10 @@ async function saveTurntableSet(){
     const topic=selectedTopicId?topics.find(t=>String(t.id)===String(selectedTopicId)&&['general','specific'].includes(t.block)):null;
     if(selectedTopicId&&!topic)throw new Error('Выбранная тема больше не существует. Обновите страницу и выберите её заново.');
     btn.disabled=true;btn.textContent='Подготовка папки…';document.querySelectorAll('#ttPreview button,#ttTopicPicker button').forEach(b=>b.disabled=true);
+    stage='Создание набора';
     const set=await sb.from('turntable_sets').insert({title,frame_paths:[],created_by:me?.id||null}).select('id').single();
     if(set.error)throw set.error;setId=set.data.id;
+    stage='Загрузка кадров';
     const paths=[];
     const setTtStatus=(idx,cls,content)=>{const el=document.querySelector(`[data-tt-status="${idx}"]`);if(!el)return;el.className='tt-upload-status'+(cls?' '+cls:'');el.innerHTML=content};
     for(let i=0;i<ttUploadFiles.length;i++)setTtStatus(i,'','Ожидание…');
@@ -1313,20 +1316,30 @@ async function saveTurntableSet(){
       await uploadTimewebFrame(f,path);paths.push(path);uploaded.push(path);
       setTtStatus(i,'done','✓ Загружено');btn.textContent=`Загрузка кадров… ${i+1}/${ttUploadFiles.length}`;
     }
+    stage='Сохранение списка кадров';
     const upd=await sb.from('turntable_sets').update({frame_paths:paths}).eq('id',setId);if(upd.error)throw upd.error;
     btn.textContent='Сохранение задания…';
-    const q=await sb.from('questions').insert({section:'macro',block:topic?.block||null,topic_id:topic?.id||null,prompt:promptText,image_path:'360:storage:'+setId,is_exam:!!topic,is_published:false,created_by:me?.id||null}).select('id').single();
+    stage='Создание вопроса';
+    questionId=crypto.randomUUID();
+    const q=await sb.from('questions').insert({id:questionId,section:'macro',block:topic?.block||'specific',topic_id:topic?.id||null,prompt:promptText,image_path:'360:storage:'+setId,is_exam:true,is_published:false,created_by:me?.id||null}).select('id').single();
     if(q.error)throw q.error;
+    stage='Сохранение вариантов ответа';
     const optionsInsert=await sb.from('question_options').insert(options.map((text,i)=>text?{question_id:q.data.id,option_text:text,sort_order:i}:null).filter(Boolean)).select('id,sort_order');
     if(optionsInsert.error)throw optionsInsert.error;
     const correctId=optionsInsert.data.find(x=>x.sort_order===correct)?.id;if(!correctId)throw new Error('Не найден правильный вариант ответа');
+    stage='Сохранение правильного ответа';
     const ans=await sb.from('question_answers').insert({question_id:q.data.id,correct_option_id:correctId,explanation:$('#ttExplanation').value.trim()||null});if(ans.error)throw ans.error;
+    stage='Публикация';
     if($('#ttPublish').checked){const pubres=await sb.from('questions').update({is_published:true}).eq('id',q.data.id);if(pubres.error)throw pubres.error}
+    committed=true;
     turntableFrameCache.delete(setId);toast($('#ttPublish').checked?'360° задание опубликовано':'360° задание сохранено как черновик');await admin();
   }catch(e){
-    if(setId)await sb.from('turntable_sets').delete().eq('id',setId);
-    if(uploaded.length)try{await deleteTimewebFrames(uploaded)}catch(cleanupError){console.warn('Не удалось удалить временные кадры из Timeweb',cleanupError)}
-    fail(err,e);btn.disabled=false;btn.textContent='Загрузить и опубликовать';document.querySelectorAll('#ttPreview button,#ttTopicPicker button').forEach(b=>b.disabled=false);
+    // Do not remove frames if the database may already reference them.
+    if(!committed && setId && !questionId){
+      try{const cleanup=await sb.from('turntable_sets').delete().eq('id',setId);if(cleanup.error)throw cleanup.error;if(uploaded.length)await deleteTimewebFrames(uploaded)}catch(cleanupError){console.warn('Cleanup failed',cleanupError)}
+    }
+    console.error('360 save failed',stage,e);
+    fail(err,new Error(stage+': '+msg(e)+(e?.code?' ['+e.code+']':'')+(questionId&&!committed?' — кадры сохранены; проверьте черновик и набор '+setId+' в базе.':'')));btn.disabled=false;btn.textContent='Загрузить и опубликовать';document.querySelectorAll('#ttPreview button,#ttTopicPicker button').forEach(b=>b.disabled=false);
   }
 }
 async function admin(mark=true){if(mark)markRoute('admin');
@@ -1693,7 +1706,7 @@ async function saveQ(id){
     const saveOne=async(qid,bk,withImage)=>{
       const selectedTopic=topics.find(t=>String(t.id)===String($('#t').value));
       const is360Macro=!!(imagePath&&isTurntablePath(imagePath))||!!(old&&isTurntablePath(old)&&!rm);
-      const row={section:is360Macro?'macro':sec,block:selectedTopic?.block||'specific',topic_id:selectedTopic?.id??+$('#t').value,prompt:bk.pr,is_exam:is360Macro?true:(sec==='macro'&&$('#is_exam')?.checked),is_published:false};
+      const row={section:is360Macro?'macro':sec,block:selectedTopic?.block||'specific',topic_id:is360Macro?(selectedTopic?.id??null):(selectedTopic?.id??+$('#t').value),prompt:bk.pr,is_exam:is360Macro?true:(sec==='macro'&&$('#is_exam')?.checked),is_published:false};
       if(withImage)row.image_path=imagePath; // у первого вопроса — только если фото менялось
       else row.image_path=imagePath!==undefined?imagePath:(old||null); // у добавленных — то же фото, что у первого
       if(qid){const r=await sb.from('questions').update(row).eq('id',qid);if(r.error)throw r.error}
