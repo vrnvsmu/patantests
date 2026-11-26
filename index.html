@@ -1278,7 +1278,7 @@ async function uploadCreateFrame(f){f.status='loading';renderTurntableFileOrder(
 async function discardCreateFrames(frames){for(const f of frames){await f.promise;if(f.status==='done')await deleteTimewebFrames([f.path]);URL.revokeObjectURL(f.preview)}}
 async function cancelTurntableCreate(){if(ttSaving)return;const frames=ttUploadFiles;ttUploadFiles=[];try{await discardCreateFrames(frames);await admin()}catch(e){ttUploadFiles=frames;renderTurntableFileOrder();toast(msg(e))}}
 function ttNamedFolder(title,id){const ru='абвгдеёжзийклмнопрстуфхцчшщъыьэюя',lat=['a','b','v','g','d','e','yo','zh','z','i','y','k','l','m','n','o','p','r','s','t','u','f','kh','ts','ch','sh','shch','','y','','e','yu','ya'];const slug=Array.from(title.toLowerCase()).map(c=>ru.includes(c)?lat[ru.indexOf(c)]:c).join('').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,80)||'preparat';return `turntables/${slug}-${id}`;}
-function selectCreateFrames(files){if(ttSaving)return;const title=$('#ttTitle').value.trim();const folder=ttUploadFiles[0]?.path.split('/').slice(0,-1).join('/')||(title?ttNamedFolder(title,ttDraftId):`turntables/${ttDraftId}`);for(const file of files){if(!EXT[file.type]||file.size>5*1024*1024){toast('Недопустимый файл: '+file.name);continue}if(ttUploadFiles.length>=120)break;const f={file,name:file.name,type:file.type,size:file.size,preview:URL.createObjectURL(file),path:`${folder}/${crypto.randomUUID()}.${EXT[file.type]}`,status:'waiting'};ttUploadFiles.push(f);f.promise=uploadCreateFrame(f)}renderTurntableFileOrder()}
+function selectCreateFrames(files){if(ttSaving)return;const folder=ttUploadFiles[0]?.path.split('/').slice(0,-1).join('/')||`turntables/${ttDraftId}`;for(const file of files){if(!EXT[file.type]||file.size>5*1024*1024){toast('Недопустимый файл: '+file.name);continue}if(ttUploadFiles.length>=120)break;const f={file,name:file.name,type:file.type,size:file.size,preview:URL.createObjectURL(file),path:`${folder}/${crypto.randomUUID()}.${EXT[file.type]}`,status:'waiting'};ttUploadFiles.push(f);f.promise=uploadCreateFrame(f)}renderTurntableFileOrder()}
 
 function macroTopicChoices(handler){
   return ['general','specific'].map(block=>{
@@ -1317,16 +1317,10 @@ async function saveTurntableSet(){
     const selectedTopicId=$('#ttCreateTopicId')?.value||'';
     const topic=selectedTopicId?topics.find(t=>String(t.id)===String(selectedTopicId)&&['general','specific'].includes(t.block)):null;
     if(selectedTopicId&&!topic)throw new Error('Выбранная тема больше не существует. Обновите страницу и выберите её заново.');
-    btn.disabled=true;btn.textContent='Подготовка папки…';document.querySelectorAll('#ttPreview button,#ttTopicPicker button').forEach(b=>b.disabled=true);
+    btn.disabled=true;btn.textContent='Проверка кадров…';document.querySelectorAll('#ttPreview button,#ttTopicPicker button').forEach(b=>b.disabled=true);
     stage='Проверка загрузки кадров';
     await Promise.all(ttUploadFiles.map(f=>f.promise));
     if(ttUploadFiles.some(f=>f.status!=='done'))throw new Error('Повторите загрузку неудачных кадров');
-    const targetFolder=ttNamedFolder(title,ttDraftId);
-    stage='Перенос кадров в папку набора';
-    for(const f of ttUploadFiles){
-      const target=targetFolder+'/'+f.path.split('/').pop();
-      if(target!==f.path){const previous=f.path;await uploadTimewebFrame(f.file,target);f.path=target;try{await deleteTimewebFrames([previous])}catch(e){console.warn('Не удалён временный кадр',e);toast('Не удалось удалить временный файл: '+msg(e))}}
-    }
     const paths=ttUploadFiles.map(f=>f.path);
     stage='Создание набора';
     const set=await sb.from('turntable_sets').insert({id:ttDraftId,title,frame_paths:paths,created_by:me?.id||null}).select('id').single();
