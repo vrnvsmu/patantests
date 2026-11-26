@@ -935,7 +935,7 @@ function renderAdminTurntableEditList(){
     <div class="tt-frame-actions">
       <button type="button" class="tt-drag-handle" title="Зажмите и перетаскивайте" aria-label="Перетащить кадр">↕</button>
       <label class="tt-frame-replace" title="Заменить кадр">↻<input type="file" accept="image/jpeg,image/png,image/webp" onchange="replaceAdminTurntableFrame(${i},this.files[0])"></label>
-      <button type="button" class="secondary" onclick="removeAdminTurntableFrame(${i})" aria-label="Удалить кадр">×</button>
+      <button type="button" class="secondary" onclick="removeAdminTurntableFrame(${i}).catch(e=>toast(msg(e)))" aria-label="Удалить кадр">×</button>
     </div>
   </div>`).join('');
   const note=document.createElement('div');note.className='muted tt-edit-note';note.textContent=`Кадров: ${frames.length}. Зажмите ручку справа и плавно перетаскивайте кадры. Нажмите миниатюру для просмотра всей ленты.`;box.prepend(note);
@@ -962,7 +962,17 @@ function addAdminTurntableFrames(files){
 }
 function previewAdminTurntableFrame(i){openAdminTurntablePreview(i)}
 function moveAdminTurntableFrame(i,d){const a=adminTurntableEditState?.frames;if(!a)return;const j=i+d;if(j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]];renderAdminTurntableEditList()}
-async function removeAdminTurntableFrame(i){if(!adminTurntableEditState)return;const [f]=adminTurntableEditState.frames.splice(i,1);if(f?.uploadPromise)await f.uploadPromise;if(f?.uploadedNow&&f.path)await deleteTimewebFrames([f.path]);if(f?.previewUrl)URL.revokeObjectURL(f.previewUrl);renderAdminTurntableEditList()}
+async function removeAdminTurntableFrame(i){
+  const st=adminTurntableEditState;if(!st||st.frames.length<=2)return;
+  const f=st.frames[i];if(!f)return;if(f.uploadPromise)await f.uploadPromise;
+  if(f.path){
+    const r=await sb.from('turntable_sets').select('frame_paths').eq('id',st.setId).single();if(r.error)throw r.error;
+    const old=r.data.frame_paths||[];const next=old.filter(p=>turntableStoredKey(p,st.setId)!==f.path);
+    if(next.length!==old.length){if(next.length<2)throw new Error('В сохранённом наборе должно остаться минимум два кадра');const u=await sb.from('turntable_sets').update({frame_paths:next}).eq('id',st.setId);if(u.error)throw u.error;turntableFrameCache.delete(st.setId)}
+    if(f.uploadedNow||next.length!==old.length){let key=f.path;if(key.startsWith(S3_MEDIA_BASE+'/'))key=decodeURIComponent(key.slice(S3_MEDIA_BASE.length+1).split('?')[0]);if(/^(?:turntables\/|testpatan-media\/turntables\/)/.test(key)){try{await deleteTimewebFrames([key])}catch(e){toast('Кадр исключён из набора, но S3 не удалил файл: '+msg(e))}}else toast('Кадр исключён; внешний путь требует ручного удаления')}
+  }
+  const pos=st.frames.indexOf(f);if(pos>=0)st.frames.splice(pos,1);if(f.previewUrl)URL.revokeObjectURL(f.previewUrl);renderAdminTurntableEditList();
+}
 async function replaceAdminTurntableFrame(i,file){
   if(!file||!adminTurntableEditState)return;
   if(!EXT[file.type]||file.size>5*1024*1024){toast('Выберите JPEG, PNG или WebP до 5 МБ');return}
@@ -1034,7 +1044,7 @@ function openAdminTurntablePreview(startIndex=0){
   const fileInput=overlay.querySelector('.tt-view-file');let busy=false;
   overlay.querySelector('.tt-view-replace').onclick=()=>{if(!busy)fileInput.click()};
   fileInput.onchange=async()=>{const file=fileInput.files[0];if(!file||busy)return;busy=true;try{await replaceAdminTurntableFrame(index,file);show(index)}finally{busy=false;fileInput.value=''}};
-  overlay.querySelector('.tt-view-delete').onclick=async()=>{if(busy||st.frames.length<=2||!confirm('Удалить этот кадр из набора?'))return;busy=true;try{await removeAdminTurntableFrame(index);show(Math.min(index,st.frames.length-1))}catch(e){toast(msg(e))}finally{busy=false}};
+  overlay.querySelector('.tt-view-delete').onclick=async()=>{if(busy||st.frames.length<=2||!confirm('Удалить этот кадр из набора и S3 без возможности отмены?'))return;busy=true;try{await removeAdminTurntableFrame(index);show(Math.min(index,st.frames.length-1))}catch(e){toast(msg(e))}finally{busy=false}};
   overlay.querySelector('.prev').onclick=()=>show(index-1);overlay.querySelector('.next').onclick=()=>show(index+1);scrub.addEventListener('input',()=>show(+scrub.value));
   const close=()=>{overlay.remove();document.removeEventListener('keydown',keys)};const keys=e=>{if(e.key==='Escape')close();if(e.key==='ArrowLeft')show(index-1);if(e.key==='ArrowRight')show(index+1)};
   overlay.querySelector('.tt-admin-close').onclick=close;overlay.addEventListener('click',e=>{if(e.target===overlay)close()});document.addEventListener('keydown',keys);document.body.appendChild(overlay);show(index);
@@ -1267,8 +1277,8 @@ let ttUploadFiles=[],ttDraftId=null,ttSaving=false;
 async function uploadCreateFrame(f){f.status='loading';renderTurntableFileOrder();try{await uploadTimewebFrame(f.file,f.path);f.status='done'}catch(e){f.status='error';f.error=msg(e)}finally{renderTurntableFileOrder()}}
 async function discardCreateFrames(frames){for(const f of frames){await f.promise;if(f.status==='done')await deleteTimewebFrames([f.path]);URL.revokeObjectURL(f.preview)}}
 async function cancelTurntableCreate(){if(ttSaving)return;const frames=ttUploadFiles;ttUploadFiles=[];try{await discardCreateFrames(frames);await admin()}catch(e){ttUploadFiles=frames;renderTurntableFileOrder();toast(msg(e))}}
-function ttNamedFolder(title,id){const ru='абвгдеёжзийклмнопрстуфхцчшщъыьэюя',lat=['a','b','v','g','d','e','yo','zh','z','i','y','k','l','m','n','o','p','r','s','t','u','f','kh','ts','ch','sh','shch','','y','','e','yu','ya'];const slug=Array.from(title.toLowerCase()).map(c=>ru.includes(c)?lat[ru.indexOf(c)]:c).join('').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,80)||'preparat';return `testpatan-media/turntables/${slug}-${id}`;}
-function selectCreateFrames(files){if(ttSaving)return;const title=$('#ttTitle').value.trim();if(!title){toast('Сначала введите название набора, затем выберите фотографии');return;}const folder=ttUploadFiles[0]?.path.split('/').slice(0,-1).join('/')||ttNamedFolder(title,ttDraftId);for(const file of files){if(!EXT[file.type]||file.size>5*1024*1024){toast('Недопустимый файл: '+file.name);continue}if(ttUploadFiles.length>=120)break;const f={file,name:file.name,type:file.type,size:file.size,preview:URL.createObjectURL(file),path:`${folder}/${crypto.randomUUID()}.${EXT[file.type]}`,status:'waiting'};ttUploadFiles.push(f);f.promise=uploadCreateFrame(f)}renderTurntableFileOrder()}
+function ttNamedFolder(title,id){const ru='абвгдеёжзийклмнопрстуфхцчшщъыьэюя',lat=['a','b','v','g','d','e','yo','zh','z','i','y','k','l','m','n','o','p','r','s','t','u','f','kh','ts','ch','sh','shch','','y','','e','yu','ya'];const slug=Array.from(title.toLowerCase()).map(c=>ru.includes(c)?lat[ru.indexOf(c)]:c).join('').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,80)||'preparat';return `turntables/${slug}-${id}`;}
+function selectCreateFrames(files){if(ttSaving)return;const title=$('#ttTitle').value.trim();const folder=ttUploadFiles[0]?.path.split('/').slice(0,-1).join('/')||(title?ttNamedFolder(title,ttDraftId):`turntables/${ttDraftId}`);for(const file of files){if(!EXT[file.type]||file.size>5*1024*1024){toast('Недопустимый файл: '+file.name);continue}if(ttUploadFiles.length>=120)break;const f={file,name:file.name,type:file.type,size:file.size,preview:URL.createObjectURL(file),path:`${folder}/${crypto.randomUUID()}.${EXT[file.type]}`,status:'waiting'};ttUploadFiles.push(f);f.promise=uploadCreateFrame(f)}renderTurntableFileOrder()}
 
 function macroTopicChoices(handler){
   return ['general','specific'].map(block=>{
@@ -1311,6 +1321,12 @@ async function saveTurntableSet(){
     stage='Проверка загрузки кадров';
     await Promise.all(ttUploadFiles.map(f=>f.promise));
     if(ttUploadFiles.some(f=>f.status!=='done'))throw new Error('Повторите загрузку неудачных кадров');
+    const targetFolder=ttNamedFolder(title,ttDraftId);
+    stage='Перенос кадров в папку набора';
+    for(const f of ttUploadFiles){
+      const target=targetFolder+'/'+f.path.split('/').pop();
+      if(target!==f.path){const previous=f.path;await uploadTimewebFrame(f.file,target);f.path=target;try{await deleteTimewebFrames([previous])}catch(e){console.warn('Не удалён временный кадр',e);toast('Не удалось удалить временный файл: '+msg(e))}}
+    }
     const paths=ttUploadFiles.map(f=>f.path);
     stage='Создание набора';
     const set=await sb.from('turntable_sets').insert({id:ttDraftId,title,frame_paths:paths,created_by:me?.id||null}).select('id').single();
