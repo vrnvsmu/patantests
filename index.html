@@ -604,22 +604,19 @@ const $=s=>document.querySelector(s),app=$('#app');
 // Do not push browser history on every DOM update. Native Back/Forward stays predictable.
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const sb=supabase.createClient(CFG.url,CFG.key);
-// Anonymous visitors use a narrow server-side gateway; no Neon JWT or DB credentials are exposed.
-const GUEST_RPC_URL=''; // Вставьте фактический URL опубликованной функции guest из панели Neon.
+// Guest requests use Neon Auth anonymous JWT and scoped PostgreSQL RPCs.
 const GUEST_SESSION_KEY='testpatan_guest_session_v1';
 let guestSessionToken='';
-try{guestSessionToken=localStorage.getItem(GUEST_SESSION_KEY)||'';if(!/^[A-Za-z0-9_-]{32,128}$/.test(guestSessionToken))guestSessionToken=''}catch(_){}
+try{guestSessionToken=localStorage.getItem(GUEST_SESSION_KEY)||'';if(!/^[a-f0-9]{64}$/.test(guestSessionToken))guestSessionToken=''}catch(_){}
 if(!guestSessionToken){const bytes=new Uint8Array(32);crypto.getRandomValues(bytes);guestSessionToken=Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');try{localStorage.setItem(GUEST_SESSION_KEY,guestSessionToken)}catch(_){}}
 const GUEST_RPC_ALLOWLIST=new Set(['list_topics','get_question_topics','get_question_options','get_public_content','get_public_turntable','start_attempt','check_answer','finish_attempt','get_attempt_review','resume_guest_attempt']);
+const GUEST_RPC_MAP=Object.freeze({list_topics:'guest_topics',get_question_topics:'guest_question_topics',get_question_options:'guest_question_options',get_public_content:'guest_public_content',get_public_turntable:'guest_turntable',start_attempt:'start_guest_attempt',check_answer:'check_guest_answer',finish_attempt:'finish_guest_attempt',get_attempt_review:'get_guest_attempt_review',resume_guest_attempt:'resume_guest_attempt'});
 async function guestRpc(name,args={}){
   try{
+    if(!GUEST_RPC_ALLOWLIST.has(name))throw new Error('Недоступная гостевая операция');
     const requestArgs=['start_attempt','check_answer','finish_attempt','get_attempt_review','resume_guest_attempt'].includes(name)?{...args,p_guest_token:args.p_guest_token||guestSessionToken}:args;
-    if(!GUEST_RPC_URL)throw new Error('Не настроен адрес гостевого API (GUEST_RPC_URL).');
-    const response=await fetch(GUEST_RPC_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,args:requestArgs})});
-    let payload;try{payload=await response.json()}catch(_){payload=null}
-    if(!response.ok)return {data:null,error:{message:payload?.error?.message||payload?.error||`Ошибка гостевого сервиса (${response.status})`}};
-    return payload&&Object.prototype.hasOwnProperty.call(payload,'data')?payload:{data:null,error:{message:payload?.error?.message||'Некорректный ответ гостевого сервиса'}};
-  }catch(error){return {data:null,error:{message:error?.message||'Не удалось связаться с гостевым сервисом'}}}
+    return await sb.rpc(GUEST_RPC_MAP[name],requestArgs);
+  }catch(error){return {data:null,error:{message:error?.message||'Ошибка Neon Data API'}}}
 }
 function appRpc(name,args={}){return !me&&GUEST_RPC_ALLOWLIST.has(name)?guestRpc(name,{...args,...(['check_answer','finish_attempt','get_attempt_review','resume_guest_attempt'].includes(name)?{p_guest_token:Q?.guestToken||guestSessionToken}:{})}):sb.rpc(name,args)}
 async function guestPublicTable(name){
@@ -2064,7 +2061,7 @@ if(!window.__stbBound){
   try{
     const {createClient,SupabaseAuthAdapter}=await import('https://esm.sh/@neondatabase/neon-js@0.9.0-beta?bundle');
     const client=createClient({
-      auth:{url:AUTH_URL,adapter:SupabaseAuthAdapter()},
+      auth:{url:AUTH_URL,adapter:SupabaseAuthAdapter(),allowAnonymous:true},
       dataApi:{url:DATA_API_URL}
     });
     window.CFG={url:AUTH_URL,key:'',emailDomain:'testpatan-vgmu.com'};
