@@ -726,7 +726,7 @@ async function loadMe(){
   const a=await sb.from('admins').select('user_id').eq('user_id',user.id).maybeSingle(); isAdmin=!!a.data;
 }
 function nav(){
-  $('#nav').innerHTML=(me?`<button class="ghost" onclick="profile()">Личный кабинет</button>`+(isAdmin?`<button class="ghost" onclick="admin()">Администратор</button>`:'')+`<button class="ghost" onclick="logout()">Выйти</button>`:`<button class="ghost" onclick="authPage()">Вход / Регистрация</button>`);
+  $('#nav').innerHTML=(me?`<button class="ghost" onclick="profile()">Статистика</button>`+(isAdmin?`<button class="ghost" onclick="admin()">Администратор</button>`:'')+`<button class="ghost" onclick="logout()">Выйти</button>`:`<button class="ghost" onclick="authPage()">Вход / Регистрация</button>`);
 }
 async function logout(){await sb.auth.signOut();me=null;isAdmin=false;nav();home()}
 
@@ -1175,7 +1175,7 @@ async function answer(btn,q){
   if(error){fail(fb,error);bs.forEach(b=>b.disabled=false);return}
   const prior={chosen:btn.dataset.id,correct:!!data.is_correct,correctId:data.correct_option_id||null,explanation:data.explanation||''};
   Q.answers=Q.answers||{};Q.answers[q.id]=prior;saveCurrentAttempt();
-  const nb=document.querySelectorAll('.question-nav button')[Q.i];if(nb){nb.classList.remove('done','skipped','incorrect');nb.classList.add(taskDone(Q.tasks[Q.i])?'done':taskWrong(Q.tasks[Q.i])?'incorrect':'skipped')}
+  const nb=document.querySelector('.question-nav-window button.current');if(nb){nb.classList.remove('done','skipped','incorrect');nb.classList.add(taskDone(Q.tasks[Q.i])?'done':taskWrong(Q.tasks[Q.i])?'incorrect':'skipped')}
   bs.forEach(b=>{if(b.dataset.id===data.correct_option_id)b.classList.add('correct')});
   if(!data.is_correct)btn.classList.add('wrong');
   fb.innerHTML=`<div class="feedback ${data.is_correct?'feedback-correct':'feedback-wrong'}"><b>${data.is_correct?'Верно':'Неверно'}</b>${data.explanation?`<br>${esc(data.explanation)}`:''}</div>`;
@@ -2291,3 +2291,21 @@ html.tp-dark .tp-morph-feedback :is(textarea,input){background:#302b36!important
 <script>
 (()=>{const bar=document.querySelector('.topbar'),tabs=document.querySelector('.desktop-tabs'),actions=document.querySelector('.top-actions');if(!bar||!tabs||!actions)return;function fit(){if(innerWidth<901)return;const b=bar.getBoundingClientRect(),a=actions.getBoundingClientRect(),t=tabs.getBoundingClientRect();const right=Math.max(0,b.right-a.left+8);const room=a.left-8-t.right-12;bar.classList.toggle('tp-search-tight',room<150);bar.style.setProperty('--tp-search-room',Math.max(42,Math.min(380,room))+'px');bar.style.setProperty('--tp-search-right',right+'px');}const st=document.createElement('style');st.textContent='@media(min-width:901px){.topbar .top-search,.topbar .top-search.is-open{right:var(--tp-search-right,182px)!important}}';document.head.append(st);fit();window.addEventListener('resize',fit);if(window.ResizeObserver){const ro=new ResizeObserver(fit);ro.observe(actions);ro.observe(tabs);ro.observe(bar)}})();
 </script>
+
+<style id="tp-mobile-account-and-quiz-contrast">
+html.tp-dark #app .quiz-visual,html.tp-dark #app .turntable-shell{background:#171b20!important;color:var(--ink)!important;border-color:var(--line)!important}
+html.tp-dark #app .progress{background:#403947!important}
+html.tp-dark #app .question-nav button.done,html.tp-dark #app .question-nav button.done:hover,html.tp-dark #app .answer.correct,html.tp-dark #app .answer.correct:hover,html.tp-dark #app .answer.correct:disabled{background:#234b35!important;color:#d0f8dc!important;border-color:#69b985!important;opacity:1!important}
+html.tp-dark #app .question-nav button.incorrect,html.tp-dark #app .answer.wrong,html.tp-dark #app .answer.wrong:hover,html.tp-dark #app .answer.wrong:disabled{background:#512c38!important;color:#ffd5dd!important;border-color:#cf788b!important;opacity:1!important}
+html.tp-dark #app .question-nav button.current{outline:2px solid var(--accent);outline-offset:2px}
+html.tp-dark #app .question-actions .favorite-btn.save-button{background:var(--paper)!important;border-color:var(--line)!important;color:var(--accent)!important}
+@media(max-width:900px){
+.topbar .desktop-theme,.topbar .desktop-profile{display:flex!important;align-items:center;justify-content:center;flex:none;height:38px;padding:0!important;border:1px solid var(--line)!important;border-radius:999px!important;background:var(--paper)!important;color:var(--ink)!important;box-shadow:none!important}
+.topbar .desktop-theme{position:relative;width:62px;gap:0;isolation:isolate;order:2}.desktop-theme span{width:28px;text-align:center;z-index:1;font-size:17px}.desktop-theme i{position:absolute;left:4px;width:26px;height:26px;border-radius:50%;background:var(--soft);transition:transform .4s cubic-bezier(.2,.8,.2,1)}
+.topbar .desktop-account{display:block!important;position:relative;flex:none;order:2}.topbar .desktop-profile{width:38px}.topbar .desktop-account #nav{display:grid!important;position:absolute;right:0;top:calc(100% + 8px);width:max-content;min-width:170px;max-width:calc(100vw - 24px);padding:7px;gap:4px;border:1px solid var(--line);border-radius:15px;background:var(--paper);box-shadow:var(--shadow);z-index:100;opacity:0;visibility:hidden;pointer-events:none;transform:translateY(-7px) scale(.96);transform-origin:top right;transition:opacity .23s ease,transform .32s cubic-bezier(.2,.8,.2,1),visibility .23s}
+.topbar .desktop-account.open #nav{opacity:1;visibility:visible;pointer-events:auto;transform:none}.topbar .desktop-account #nav button.ghost{display:block!important;width:100%;text-align:left;height:40px!important;padding:0 12px!important;color:var(--ink)!important;border-radius:10px!important;background:transparent!important}.topbar .desktop-account #nav button.ghost:hover{background:var(--soft)!important}
+.topbar:has(.top-search.is-open) .desktop-account,.topbar:has(.top-search.is-open) .desktop-theme{display:none!important}
+}
+@media(max-width:700px){.topbar .top-actions{display:contents!important}.topbar .desktop-account #nav{right:0;left:auto}.topbar .desktop-account #nav button.ghost{flex:none!important}.topbar .top-search{order:3!important}}
+@media(prefers-reduced-motion:reduce){.topbar .desktop-account #nav,.desktop-theme i{transition:none!important}}
+</style>
