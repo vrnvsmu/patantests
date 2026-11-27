@@ -763,6 +763,7 @@ async function init(){
     }
     topics=t.data||[];
     nav(); await restoreRoute(location.hash.replace(/^#\/?/,''));
+    scheduleExamPreviewPreload();
   } catch(e) {
     console.error('Site initialization failed:',e);
     app.innerHTML=`<section class="panel"><h2>Не удалось подключиться к сервису</h2><p>Не удалось получить данные или проверить вход. Попробуйте обновить страницу.</p><p class="muted">Если проблема возникает только без VPN, вероятна недоступность одного из внешних сервисов из вашей сети.</p><button onclick="location.reload()">Повторить загрузку</button></section>`;
@@ -872,10 +873,39 @@ async function searchSite(v){const q=String(v||'').trim();searchClose();if(!q)re
 
 function needLogin(){if(!me){authPage();return true}return false}
 const activeFolder={macro:new Set(),micro:new Set(),theory:new Set()};
+// Share the initial catalog request with the exam screen; refresh on subsequent visits.
+let examCatalogPending=null, examCatalogWarm=null;
+function requestExamCatalog(){
+  if(!examCatalogPending){
+    examCatalogPending=Promise.resolve().then(()=>sb.rpc('exam_catalog', {})).finally(()=>{examCatalogPending=null});
+  }
+  return examCatalogPending;
+}
+function scheduleExamPreviewPreload(){
+  const run=async()=>{
+    try{
+      const result=await requestExamCatalog();
+      if(result.error)return;
+      examCatalogWarm={result,at:Date.now(),user:me?.id||null};
+      const urls=[...new Set((Array.isArray(result.data)?result.data:[]).filter(r=>r.preview).map(r=>pub(r.preview)).filter(Boolean))];
+      let cursor=0;
+      const worker=async()=>{
+        while(cursor<urls.length){
+          const url=urls[cursor++];
+          await new Promise(resolve=>{const img=new Image();img.fetchPriority='low';img.decoding='async';const done=()=>{img.onload=img.onerror=null;resolve()};img.onload=img.onerror=done;img.src=url;if(img.complete)done()});
+        }
+      };
+      await Promise.all(Array.from({length:Math.min(3,urls.length)},worker));
+    }catch(e){console.warn('Exam preview preload:',e)}
+  };
+  const schedule=()=>{if('requestIdleCallback' in window)window.requestIdleCallback(()=>void run(),{timeout:2000});else setTimeout(()=>void run(),300)};
+  if(document.readyState==='complete')schedule();else window.addEventListener('load',schedule,{once:true});
+}
 async function examCatalog(){
   const target=app;target.innerHTML='<div class="panel">Загрузка препаратов…</div>';
   const marker=target.firstElementChild;
-  const {data,error}=await sb.rpc('exam_catalog', {});
+  const warm=examCatalogWarm;examCatalogWarm=null;
+  const {data,error}=await (warm&&warm.user===(me?.id||null)&&Date.now()-warm.at<60000?Promise.resolve(warm.result):requestExamCatalog());
   if(!marker.isConnected)return;
   if(error){fail(target,error);target.innerHTML+=`<p class="muted">Каталог временно недоступен. Можно пройти полный экзамен.</p><button class="exam-all" onclick="start('exam',null,true)"><span><strong>Прорешать все</strong><small>Все доступные задания</small></span><span>→</span></button><button class="secondary" onclick="pick('exam')">Повторить загрузку каталога</button>`;return}
   const rows=Array.isArray(data)?data:[];
