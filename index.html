@@ -865,9 +865,9 @@ const activeFolder={macro:new Set(),micro:new Set(),theory:new Set()};
 async function examCatalog(){
   const target=app;target.innerHTML='<div class="panel">Загрузка препаратов…</div>';
   const marker=target.firstElementChild;
-  const {data,error}=await sb.rpc('exam_catalog');
+  const {data,error}=await sb.rpc('exam_catalog', {});
   if(!marker.isConnected)return;
-  if(error){fail(target,error);target.innerHTML+='<button class="secondary" onclick="pick(\'exam\')">Повторить</button>';return}
+  if(error){fail(target,error);target.innerHTML+=`<p class="muted">Каталог временно недоступен. Можно пройти полный экзамен.</p><button class="exam-all" onclick="start('exam',null,true)"><span><strong>Прорешать все</strong><small>Все доступные задания</small></span><span>→</span></button><button class="secondary" onclick="pick('exam')">Повторить загрузку каталога</button>`;return}
   const rows=Array.isArray(data)?data:[];
   window.examCatalogRows=rows;
   target.innerHTML=`<div class="eyebrow">ПОДГОТОВКА К ЭКЗАМЕНУ</div><h2>Экзамен</h2><p class="muted">Выберите препарат или пройдите все задания.</p><button class="exam-all" ${rows.length?'':'disabled'} onclick="startExamSelection()"><span><strong>Прорешать все</strong><small>${rows.length} препаратов · все доступные задания</small></span><span aria-hidden="true">→</span></button><div class="exam-catalog">${rows.map((r,i)=>`<button class="exam-tile" onclick="startExamSelection(${i})"><span class="exam-preview">${r.preview?`<img loading="lazy" src="${esc(pub(r.preview))}" alt="Препарат ${i+1}">`:'<span>Препарат</span>'}${r.is_360?'<b class="exam-360">360°</b>':''}</span><span class="exam-tile-label"><strong>Препарат ${i+1}</strong><small>${r.question_count} вопр. · Начать →</small></span></button>`).join('')}</div>${rows.length?'':'<p class="muted">Нет доступных препаратов.</p>'}`;
@@ -2375,3 +2375,12 @@ html.tp-dark #notifPanel .notif-item.new{background:#352c39!important}
 <script>
 (()=>{const account=document.querySelector('.desktop-account'),button=account?.querySelector('.desktop-profile');if(!button)return;function position(){if(!matchMedia('(max-width:700px)').matches)return;const r=button.getBoundingClientRect(),w=Math.min(200,innerWidth-24);account.style.setProperty('--tp-profile-x',Math.max(12,Math.min(innerWidth-w-12,r.right-w))+'px');account.style.setProperty('--tp-profile-y',r.bottom+8+'px')}button.addEventListener('click',position);window.addEventListener('resize',position);window.addEventListener('scroll',position,{passive:true});position()})();
 </script>
+
+<style id="tp-rounded-activity-chart">
+#app .stb-bar{gap:2px;border-radius:12px;animation-duration:.85s}
+#app .stb-seg{border-radius: min(10px, 25vw);background-image:linear-gradient(105deg,rgba(255,255,255,.17),transparent 65%,rgba(0,0,0,.07))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.12);}
+#app .stb-bar.is-empty{border-radius:999px;height:3px}
+#app .stb-col::before{border-radius:14px}
+#app .stb-legend i{border-radius:5px}
+@media(prefers-reduced-motion:reduce){#app .stb-bar{animation:none}}
+</style>
